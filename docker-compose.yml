@@ -23,7 +23,24 @@ services:
     depends_on:
       - db
 
-
+  fastapi:
+    build: 
+      context: .
+      dockerfile: ./FastAPI/Dockerfile
+    image: pokepedia_fastapi
+    container_name: fastapi_pokepedia
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      DATABASE_HOSTNAME: db
+      DATABASE_PORT: 5432
+      DATABASE_PASSWORD: password
+      DATABASE_USER: user
+      DATABASE_NAME: pokepedia_db
+    volumes:
+      - ./FastAPI/app:/app
 
 volumes:
   postgres_data:
