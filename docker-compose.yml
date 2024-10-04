@@ -1,46 +1,29 @@
-version: '3.4'
-
-networks:
-  default:
-    driver: bridge
+version: '3.8'
 
 services:
-  api:
-    build: .
-    networks:
-      - default
-    volumes:
-      - ./app/:/app
-    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5000", "--reload"]
-    ports:
-      - "5000:5000"
-    env_file:
-      - .env
-
   db:
-    image: postgres
-    restart: always
-    networks:
-      - default
-    env_file:
-      - .env
+    image: postgres:latest
+    container_name: postgres_pokepedia
     ports:
       - "5432:5432"
+    environment:
+      POSTGRES_DB: pokepedia_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+      - ./PostgreSQL/init.sql:/docker-entrypoint-initdb.d/init.sql
 
-  pgadmin:
-    image: dpage/pgadmin4
-    restart: always
-    networks:
-      - default
-    env_file:
-      - .env
-    ports:
-      - "9001:9001"
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
+  scrapy:
+    build:
+      context: .
+      dockerfile: ./PokepediaScrapy/Dockerfile
+    image: pokepedia_scrapy
+    container_name: scrapy_pokepedia
+    depends_on:
+      - db
+
+
 
 volumes:
-  pg_data:
-  pgadmin_data:
+  postgres_data:
