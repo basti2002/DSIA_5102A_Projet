@@ -17,4 +17,4 @@ COPY ./scrapy.cfg /app/
 WORKDIR /app/PokepediaScrapy
 
 # On run le Scrapy et l'insertion des données 
-CMD scrapy crawl pokemon && scrapy crawl pokemon_detail && python insert.py 
+CMD scrapy crawl pokemon && scrapy crawl pokemon_detail && python insert.py

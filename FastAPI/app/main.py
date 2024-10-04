@@ -1,12 +1,14 @@
-from fastapi import FastAPI, Depends, Response
+from fastapi import FastAPI, Depends, Request, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from database import SessionLocal
 from models import PokemonType, Type
+from fastapi.templating import Jinja2Templates
 import matplotlib.pyplot as plt
 from io import BytesIO
 
 app = FastAPI()
+templates = Jinja2Templates(directory="templates")
 
 # Dependency to get the database session
 def get_db():
@@ -16,11 +18,15 @@ def get_db():
     finally:
         db.close()
 
+@app.get("/", response_class=Response)
+def read_root(request: Request):
+    return templates.TemplateResponse("home.html", {"request": request})
+
 @app.get("/pokemon/type_count", response_class=Response)
 def read_type_distribution(db: Session = Depends(get_db)):
-    type_distribution = db.query(Type.type_nom, func.count(PokemonType.numero).label('count')).\
-        join(Type, PokemonType.type_id == Type.type_id).\
-        group_by(Type.type_nom).all()
+    type_distribution = db.query(Type.type_nom, func.count(PokemonType.numero).label('count'))\
+        .join(Type, PokemonType.type_id == Type.type_id)\
+        .group_by(Type.type_nom).all()
 
     # Data for plotting
     type_names = [type_name for type_name, _ in type_distribution]
