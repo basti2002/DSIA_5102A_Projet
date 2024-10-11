@@ -1,8 +1,8 @@
-from fastapi import FastAPI, Depends, Request, Response
+from fastapi import FastAPI, Depends, Request, Response, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from database import SessionLocal
-from models import PokemonType, Type
+from models import PokemonType, Type, User
 from fastapi.templating import Jinja2Templates
 import matplotlib.pyplot as plt
 from io import BytesIO
@@ -47,3 +47,9 @@ def read_type_distribution(db: Session = Depends(get_db)):
     buf.seek(0)
 
     return Response(content=buf.getvalue(), media_type="image/png")
+
+@app.get("/pokemon/view_db", response_class=Response)
+def view_db(db: Session = Depends(get_db), request: Request):
+    # Query data from the database (just an example)
+    pokemon_data = db.query(PokemonType).all()
+    return templates.TemplateResponse("view_db.html", {"request": request, "pokemon_data": pokemon_data})
