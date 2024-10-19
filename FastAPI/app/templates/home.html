@@ -1,70 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Accueil Pokémon</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-        }
-
-        header {
-            background-color: #007BFF;
-            color: #fff;
-            text-align: center;
-            padding: 1rem;
-        }
-
-        .container {
-            padding: 20px;
-        }
-
-        .btn {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            margin: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .btn:hover {
-            background-color: #218838;
-        }
-
-        .btn-danger {
-            background-color: #dc3545;
-        }
-
-        .btn-danger:hover {
-            background-color: #c82333;
-        }
-
-        .btn-primary {
-            background-color: #007bff;
-        }
-
-        .btn-primary:hover {
-            background-color: #0069d9;
-        }
-
-        .btn-reset {
-            background-color: #ffc107;
-        }
-
-        .btn-reset:hover {
-            background-color: #e0a800;
-        }
-    </style>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
 </head>
-<body>
+<body onload="checkSession()">
     <header>
         <h1>Bienvenue sur le Dashboard Pokémon</h1>
+        <button id="userButton" class="btn btn-info" onclick="toggleLoginModal()">Utilisateur</button>
+        <div id="loginModal">
+            <form action="/login" method="post">
+                <input type="text" name="username" placeholder="Nom utilisateur" required>
+                <input type="password" name="password" placeholder="Mot de passe" required>
+                <button type="submit" class="btn btn-primary">Se connecter</button>
+            </form>
+            <button onclick="window.location.href='/users/manage'" class="btn btn-info">Créer un compte</button>
+        </div>
     </header>
 
     <div class="container">
@@ -88,6 +42,20 @@
         <form action="/pokemon/reset_db">
             <button class="btn btn-reset" type="submit">Remettre à 0 la DB</button>
         </form>
+
+        <form action="/users">
+            <button class="btn btn-info" type="submit">Voir les utilisateurs</button>
+        </form>
+        
+        <form action="/users/manage">
+            <button class="btn btn-info" type="submit">Gérer les utilisateurs</button>
+        </form>
+        
+        <form action="/users/create" method="post">
+            <button class="btn btn-info" type="submit">Créer un utilisateur</button>
+        </form>
     </div>
+
+    <script src="/static/scripts.js"></script>
 </body>
 </html>
