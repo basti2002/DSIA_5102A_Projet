@@ -20,6 +20,11 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 def get_db():
     db = SessionLocal()
@@ -52,20 +57,32 @@ def check_user_exists(username: str, db: Session):
 def check_user_logged_in(token: str):
     try:
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
-        return payload.get("sub") is not None
-    except JWTError:
+        if payload.get("sub"):
+            logger.info(f"Token valid for user {payload.get('sub')}")
+            return True
         return False
+    except JWTError as e:
+        logger.error(f"Token validation error: {str(e)}")
+        return False
+
 
 from fastapi.responses import HTMLResponse
 
 @app.get("/")
-async def home(request: Request, token: Optional[str] = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+async def home(request: Request, db: Session = Depends(get_db), token: Optional[str] = Depends(oauth2_scheme)):
     if token:
-        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
-        user = db.query(User).filter(User.username == payload.get("sub")).first()
-        if user:
-            return templates.TemplateResponse("home.html", {"request": request, "user": user.username})
+        try:
+            payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+            user = db.query(User).filter(User.username == payload.get("sub")).first()
+            if user:
+                logger.info(f"Home page accessed by {user.username}")
+                return templates.TemplateResponse("home.html", {"request": request, "user": user.username})
+        except JWTError as e:
+            logger.error(f"Failed to decode JWT: {e}")
+    logger.info("Home page accessed anonymously")
     return templates.TemplateResponse("home.html", {"request": request, "user": None})
+
+
 
 
 
@@ -128,7 +145,9 @@ def create_access_token(data: dict):
     expire = datetime.utcnow() + timedelta(minutes=JWT_EXPIRATION_TIME_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+    logger.info(f"Generated token for {data['sub']} with expiry {expire}")
     return encoded_jwt
+
 
 @app.post("/token")
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(SessionLocal)):
@@ -141,7 +160,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         )
     access_token = create_access_token(data={"sub": user.username})
     response = RedirectResponse(url="/", status_code=302)
-    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True, secure=True, max_age=3600)
+    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=False, secure=False, max_age=3600)
     return response
 
 
@@ -202,8 +221,8 @@ def authenticate_user(db: Session, username: str, password: str):
 from fastapi.responses import JSONResponse
 
 COOKIE_POLICY = {
-    "httponly": True,
-    "secure": True,
+    "httponly": False,
+    "secure": False,
     "max_age": 3600,
 }
 
@@ -211,11 +230,14 @@ COOKIE_POLICY = {
 async def login(request: Request, db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
+        logger.warning(f"Login failed for username: {form_data.username}")
         return JSONResponse(status_code=400, content={"message": "Incorrect username or password"})
     access_token = create_access_token(data={"sub": user.username})
+    logger.info(f"Login successful for username: {form_data.username}")
     response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
-    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True, secure=True, max_age=3600)
+    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=False, secure=False, max_age=3600)
     return response
+
 
 @app.post("/logout")
 async def logout(request: Request):
