@@ -4,12 +4,107 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Accueil Pokémon</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <style>
+        /* Your existing CSS */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #007BFF;
+            color: #fff;
+            text-align: center;
+            padding: 1rem;
+        }
+        .container {
+            padding: 20px;
+        }
+        .btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #218838;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        .btn-primary {
+            background-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0069d9;
+        }
+        .btn-reset {
+            background-color: #ffc107;
+        }
+        .btn-reset:hover {
+            background-color: #e0a800;
+        }
+        .btn-info {
+            background-color: #17a2b8;
+        }
+        .btn-info:hover {
+            background-color #138496;
+        }
+        #loginModal{
+            display: none;
+            position: absolute;
+            top: 60px;
+            right: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        #cookieMessage {
+            display: block;
+            position: absolute;
+            top: 60px;
+            right: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            color: red;
+        }
+        #cookieStatus {
+            width: 100%;
+            height: 10px;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+        }
+
+    </style>
 </head>
-<body onload="checkSession()">
+<body onload="checkSession();">
     <header>
         <h1>Bienvenue sur le Dashboard Pokémon</h1>
+        <div id="userDetails" style="display: none;">
+            <span id="usernameDisplay">Welcome, </span>
+            <button onclick="logout()">Logout</button>
+        </div>
+        <div id="cookieMessage" style="color: red; display: none;">
+            <p>Ce site utilise des cookies pour améliorer votre expérience.</p>
+            <button id="acceptCookies" class="btn btn-info" onclick="acceptCookies()">Accepter les cookies</button>
+        </div>
+        <div id="userDetails" style="display: none;">
+            <span id="usernameDisplay"></span>
+            <button onclick="logout()">Déconnexion</button>
+        </div>
         <button id="userButton" class="btn btn-info" onclick="toggleLoginModal()">Utilisateur</button>
         <div id="loginModal">
             <form action="/login" method="post">
@@ -20,42 +115,111 @@
             <button onclick="window.location.href='/users/manage'" class="btn btn-info">Créer un compte</button>
         </div>
     </header>
-
     <div class="container">
         <p>Cliquez sur un des boutons ci-dessous pour interagir avec la base de données :</p>
         <form action="/pokemon/type_count">
             <button class="btn btn-primary" type="submit">Voir les types de Pokémon</button>
         </form>
-
         <form action="/pokemon/view_db">
             <button class="btn" type="submit">Observer les valeurs de la DB</button>
         </form>
-        
         <form action="/pokemon/add_value">
             <button class="btn btn-primary" type="submit">Ajouter une valeur</button>
         </form>
-
         <form action="/pokemon/delete_value">
             <button class="btn btn-danger" type="submit">Supprimer une valeur</button>
         </form>
-
         <form action="/pokemon/reset_db">
             <button class="btn btn-reset" type="submit">Remettre à 0 la DB</button>
         </form>
-
         <form action="/users">
             <button class="btn btn-info" type="submit">Voir les utilisateurs</button>
         </form>
-        
         <form action="/users/manage">
             <button class="btn btn-info" type="submit">Gérer les utilisateurs</button>
         </form>
-        
         <form action="/users/create" method="post">
             <button class="btn btn-info" type="submit">Créer un utilisateur</button>
         </form>
     </div>
+    <div id="cookieStatus"></div>
+    <script>
+        function acceptCookies() {
+            document.cookie = "cookies_accepted=true; path=/; max-age=" + (60 * 60 * 24 * 30); // Set cookie for 30 days
+            document.getElementById('cookieMessage').style.display = 'none'; // Hide cookie message
+            checkSession(); // Update session visibility based on cookie acceptance
+        }
 
-    <script src="/static/scripts.js"></script>
+        function toggleLoginModal() {
+            var modal = document.getElementById('loginModal');
+            modal.style.display = modal.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function checkCookiesAccepted() {
+            const cookieValue = getCookie('cookies_accepted');
+            const cookieStatus = document.getElementById('cookieStatus');
+            if (cookieValue === 'true') {
+                document.getElementById('cookieMessage').style.display = 'none';
+                cookieStatus.style.backgroundColor = 'green'; // Green if cookies are accepted
+            } else {
+                document.getElementById('cookieMessage').style.display = 'block';
+                cookieStatus.style.backgroundColor = 'red'; // Red if cookies are not accepted
+            }
+        }
+
+
+        function checkSession() {
+            const token = getCookie('access_token');
+            const userDetails = document.getElementById('userDetails');
+            const usernameDisplay = document.getElementById('usernameDisplay');
+
+            if (token) {
+                const payload = decodeJWT(token);
+                if (payload && payload.sub) {
+                    usernameDisplay.textContent += payload.sub; // Append username to the welcome message
+                    userDetails.style.display = 'block';
+                } else {
+                    userDetails.style.display = 'none';
+                }
+            } else {
+                userDetails.style.display = 'none';
+            }
+        }
+
+
+        function logout() {
+            fetch('/logout', { method: 'POST' })
+                .then(() => {
+                    window.location.href = '/';
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function decodeJWT(token) {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace('-', '+').replace('_', '/');
+            return JSON.parse(window.atob(base64));
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            checkCookiesAccepted();
+            checkSession();
+        });
+    </script>
 </body>
 </html>

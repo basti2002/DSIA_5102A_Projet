@@ -3,7 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <title>Gestion des Utilisateurs</title>
-    <link rel="stylesheet" href="/static/style.css"> <!-- Assurez-vous d'avoir un CSS approprié -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #007BFF;
+            color: #fff;
+            text-align: center;
+            padding: 1rem;
+        }
+        .container {
+            padding: 20px;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        input[type="text"], input[type="password"] {
+            padding: 8px;
+            margin: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            display: block;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -17,7 +52,6 @@
             <input type="password" name="password" required>
             <button type="submit">Submit</button>
         </form>
-        
 
         <h2>Liste des Utilisateurs</h2>
         <ul id="users-list">
@@ -27,6 +61,8 @@
         </ul>
     </div>
 
-    <script src="/static/scripts.js"></script> <!-- Pour les interactions dynamiques -->
+    <script>
+        // Ici vous pouvez ajouter les scripts que vous pensez nécessaires pour votre page
+    </script>
 </body>
 </html>

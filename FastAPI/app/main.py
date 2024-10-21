@@ -14,10 +14,12 @@ from typing import List
 from passlib.context import CryptContext
 from fastapi import HTTPException
 
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
+
 
 def get_db():
     db = SessionLocal()
@@ -25,10 +27,47 @@ def get_db():
         yield db
     finally:
         db.close()
+        
+# Configuration des paramètres JWT dans un lieu centralisé
+JWT_SECRET_KEY = "your_secret_key"  # Assurez-vous de garder cette clé sécurisée
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRATION_TIME_MINUTES = 60 * 24 * 7
 
-@app.get("/", response_class=Response)
-def read_root(request: Request):
-    return templates.TemplateResponse("home.html", {"request": request})
+# Route principale pour gérer l'accueil et la vérification de l'utilisateur
+from fastapi import HTTPException, Depends, Request, Response
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
+from fastapi.responses import JSONResponse, RedirectResponse
+from typing import Optional
+
+# Définir le point de terminaison pour obtenir le token comme facultatif
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
+
+
+# Vérification de l'existence de l'utilisateur
+def check_user_exists(username: str, db: Session):
+    return db.query(User).filter(User.username == username).first()
+
+# Vérification que l'utilisateur est connecté via un token valide
+def check_user_logged_in(token: str):
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        return payload.get("sub") is not None
+    except JWTError:
+        return False
+
+from fastapi.responses import HTMLResponse
+
+@app.get("/")
+async def home(request: Request, token: Optional[str] = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    if token:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        user = db.query(User).filter(User.username == payload.get("sub")).first()
+        if user:
+            return templates.TemplateResponse("home.html", {"request": request, "user": user.username})
+    return templates.TemplateResponse("home.html", {"request": request, "user": None})
+
+
 
 @app.get("/pokemon/type_count", response_class=Response)
 def read_type_distribution(db: Session = Depends(get_db)):
@@ -84,16 +123,27 @@ def view_db(request: Request, db: Session = Depends(get_db)):
         "pokemon_data": pokemon_data
     })
 
-JWT_SECRET_KEY = "your_secret_key"
-JWT_ALGORITHM = "HS256"
-JWT_EXPIRATION_TIME_MINUTES = 60 * 24 * 7
-
 def create_access_token(data: dict):
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=JWT_EXPIRATION_TIME_MINUTES)
+    expire = datetime.utcnow() + timedelta(minutes=JWT_EXPIRATION_TIME_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
     return encoded_jwt
+
+@app.post("/token")
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(SessionLocal)):
+    user = authenticate_user(db, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token = create_access_token(data={"sub": user.username})
+    response = RedirectResponse(url="/", status_code=302)
+    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True, secure=True, max_age=3600)
+    return response
+
 
 from fastapi import FastAPI, Depends, Request, Response, status, Form
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -151,19 +201,29 @@ def authenticate_user(db: Session, username: str, password: str):
 
 from fastapi.responses import JSONResponse
 
-@app.post("/logout")
-def logout(response: Response):
-    response.delete_cookie("access_token")
-    return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+COOKIE_POLICY = {
+    "httponly": True,
+    "secure": True,
+    "max_age": 3600,
+}
 
 @app.post("/login")
-async def login_for_access_token(response: Response, db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
+async def login(request: Request, db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
+        return JSONResponse(status_code=400, content={"message": "Incorrect username or password"})
     access_token = create_access_token(data={"sub": user.username})
-    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True)
-    return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+    response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True, secure=True, max_age=3600)
+    return response
+
+@app.post("/logout")
+async def logout(request: Request):
+    response = RedirectResponse(url="/")
+    response.delete_cookie("access_token")
+    return response
 
 
-
+@app.get("/favicon.ico")
+async def favicon():
+    return Response(status_code=204)
