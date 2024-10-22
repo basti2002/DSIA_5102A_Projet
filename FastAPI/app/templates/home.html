@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Accueil Pokémon</title>
     <style>
-        /* Your existing CSS */
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
@@ -55,7 +54,7 @@
             background-color: #17a2b8;
         }
         .btn-info:hover {
-            background-color #138496;
+            background-color: #138496;
         }
         #loginModal{
             display: none;
@@ -145,9 +144,9 @@
     <div id="cookieStatus"></div>
     <script>
         function acceptCookies() {
-            document.cookie = "cookies_accepted=true; path=/; max-age=" + (60 * 60 * 24 * 30); // Set cookie for 30 days
-            document.getElementById('cookieMessage').style.display = 'none'; // Hide cookie message
-            checkSession(); // Update session visibility based on cookie acceptance
+            document.cookie = "cookies_accepted=true; path=/; max-age=" + (60 * 60 * 24 * 30);
+            document.getElementById('cookieMessage').style.display = 'none'; 
+            checkSession(); 
         }
 
         function toggleLoginModal() {
@@ -160,10 +159,10 @@
             const cookieStatus = document.getElementById('cookieStatus');
             if (cookieValue === 'true') {
                 document.getElementById('cookieMessage').style.display = 'none';
-                cookieStatus.style.backgroundColor = 'green'; // Green if cookies are accepted
+                cookieStatus.style.backgroundColor = 'green'; 
             } else {
                 document.getElementById('cookieMessage').style.display = 'block';
-                cookieStatus.style.backgroundColor = 'red'; // Red if cookies are not accepted
+                cookieStatus.style.backgroundColor = 'red'; 
             }
         }
 
@@ -176,7 +175,7 @@
             if (token) {
                 const payload = decodeJWT(token);
                 if (payload && payload.sub) {
-                    usernameDisplay.textContent = payload.sub; // Just set the username, not append
+                    usernameDisplay.textContent = payload.sub;
                     userDetails.style.display = 'block';
                 } else {
                     userDetails.style.display = 'none';
