@@ -94,9 +94,9 @@
     <header>
         <h1>Bienvenue sur le Dashboard Pokémon</h1>
         <div id="userDetails" style="display: none;">
-            <span id="usernameDisplay">Welcome, </span>
-            <button onclick="logout()">Logout</button>
-        </div>
+            <span id="welcomeMessage">Bienvenue, </span><span id="usernameDisplay"></span>
+            <button onclick="logout()">Déconnexion</button>
+        </div>        
         <div id="cookieMessage" style="color: red; display: none;">
             <p>Ce site utilise des cookies pour améliorer votre expérience.</p>
             <button id="acceptCookies" class="btn btn-info" onclick="acceptCookies()">Accepter les cookies</button>
@@ -176,7 +176,7 @@
             if (token) {
                 const payload = decodeJWT(token);
                 if (payload && payload.sub) {
-                    usernameDisplay.textContent += payload.sub; // Append username to the welcome message
+                    usernameDisplay.textContent = payload.sub; // Just set the username, not append
                     userDetails.style.display = 'block';
                 } else {
                     userDetails.style.display = 'none';
@@ -185,6 +185,7 @@
                 userDetails.style.display = 'none';
             }
         }
+
 
 
         function logout() {
