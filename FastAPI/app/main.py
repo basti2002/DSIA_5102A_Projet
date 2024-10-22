@@ -151,7 +151,7 @@ def create_access_token(data: dict):
 
 @app.post("/token")
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(SessionLocal)):
-    user = authenticate_user(db, form_data.username, form_data.password)
+    user = authenticate_credentials(db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=401,
@@ -210,13 +210,34 @@ async def create_user(request: Request, db: Session = Depends(get_db), username:
     db.commit()
     return RedirectResponse(url="/users/manage", status_code=status.HTTP_302_FOUND)
 
-def authenticate_user(db: Session, username: str, password: str):
+def authenticate_credentials(db: Session, username: str, password: str):
     user = db.query(User).filter(User.username == username).first()
-    if not user:
-        return False
-    if not pwd_context.verify(password, user.hashed_password):
-        return False
-    return user
+    if user and pwd_context.verify(password, user.hashed_password):
+        return user
+    return None
+
+@app.middleware("http")
+async def authenticate_request(request: Request, call_next):
+    token = request.cookies.get('access_token')
+    if token:
+        db = next(get_db())
+        try:
+            payload = jwt.decode(token.split("Bearer ")[1], JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+            username = payload.get("sub")
+            user = db.query(User).filter(User.username == username).first()
+            if not user:
+                response = RedirectResponse(url="/")
+                response.delete_cookie("access_token")
+                return response
+            request.state.user = user
+        except (JWTError, IndexError):
+            response = RedirectResponse(url="/")
+            response.delete_cookie("access_token")
+            return response
+        finally:
+            db.close()
+    return await call_next(request)
+
 
 from fastapi.responses import JSONResponse
 
@@ -228,7 +249,7 @@ COOKIE_POLICY = {
 
 @app.post("/login")
 async def login(request: Request, db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
-    user = authenticate_user(db, form_data.username, form_data.password)
+    user = authenticate_credentials(db, form_data.username, form_data.password)
     if not user:
         logger.warning(f"Login failed for username: {form_data.username}")
         return JSONResponse(status_code=400, content={"message": "Incorrect username or password"})
