@@ -1,54 +1,85 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>Équipe Pokémon</title>
-    <link href="https://cdn.jsdelivr.net/npm/select2/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2/dist/js/select2.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            $('#pokemon').select2({
-                placeholder: "Sélectionnez un Pokémon",
-                allowClear: true
-            });
+  <meta charset="UTF-8">
+  <title>Équipe Pokémon</title>
+  <link href="https://cdn.jsdelivr.net/npm/select2/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2/dist/js/select2.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      $('#pokemon').select2({
+        placeholder: "Sélectionnez un Pokémon",
+        allowClear: true
+      });
+
+      $('input[type="submit"]').click(function() {
+        console.log('Bouton de soumission cliqué');
+        var action = $(this).val();
+        var pokemon_id = $('#pokemon').val();
+        var user_id = $('input[name="user_id"]').val();
+        var slot_number = $('input[name="slot_number"]').val();
+        console.log('Action : ' + action);
+        console.log('Pokémon ID : ' + pokemon_id);
+        console.log('User ID : ' + user_id);
+        console.log('Slot Number : ' + slot_number);
         });
-    </script>
+
+        $('form').submit(function(event) {
+        console.log('Formulaire soumis');
+        var formData = $(this).serialize();
+        console.log('Données envoyées : ' + formData);
+        $.ajax({
+            type: 'POST',
+            url: '/equipe_pokemon',
+            data: formData,
+            success: function() {
+            console.log('Réponse du serveur : ' + data);
+            }
+        });
+        });
+  </script>
 </head>
 <body>
-    <h1>Équipe Pokémon</h1>
-    {% if all_pokemon %}
-    <form action="/equipe_pokemon" method="post">
-        <label for="pokemon">Ajouter un Pokémon à votre équipe:</label>
-        <select name="pokemon_id" id="pokemon" style="width: 50%">
-            <option></option> <!-- Option vide pour la clarté avec allowClear -->
-            {% for pokemon in all_pokemon %}
-            <option value="{{ pokemon.numero }}">{{ pokemon.nom }}</option>
-            {% endfor %}
-        </select>
-        <input type="submit" value="Ajouter" name="action">
-    </form>
-    {% else %}
-    <p>Aucun Pokémon disponible. Veuillez d'abord en ajouter à votre base de données.</p>
-    {% endif %}
+  <h1>Équipe Pokémon</h1>
+  {% if all_pokemon %}
+  <form action="/equipe_pokemon" method="post">
+    <label for="pokemon">Ajouter un Pokémon à votre équipe:</label>
+    <select name="pokemon_id" id="pokemon" style="width: 50%">
+      <option></option> <!-- Option vide pour la clarté avec allowClear -->
+      {% for pokemon in all_pokemon %}
+      <option value="{{ pokemon.numero }}">{{ pokemon.nom }}</option>
+      {% endfor %}
+    </select>
+
+    <input type="hidden" name="user_id" value="{{ user.id }}">
     
-    <h2>Votre Équipe</h2>
+    <!-- Calcul dynamique du slot_number basé sur la taille actuelle de l'équipe -->
+    <input type="hidden" name="slot_number" value="{{ team|length + 1 }}">
+    
+    <input type="submit" value="Ajouter" name="action">
+</form>
+  {% else %}
+  <p>Aucun Pokémon disponible. Veuillez d'abord en ajouter à votre base de données.</p>
+  {% endif %}
+
+  <h2>Votre Équipe</h2>
+  <div>
+    {% if team %}
+    {% for member in team %}
     <div>
-        {% if team %}
-            {% for member in team %}
-            <div>
-                <img src="{{ member.pokemon.image }}" alt="Image de {{ member.pokemon.nom }}">
-                <p>{{ member.pokemon.nom }}</p>
-                <form action="/equipe_pokemon" method="post">
-                    <input type="hidden" name="pokemon_id" value="{{ member.pokemon_id }}">
-                    <input type="submit" value="Retirer" name="action">
-                </form>
-            </div>
-            {% endfor %}
-        {% else %}
-            <p>Votre équipe est vide. Ajoutez des Pokémon pour les voir ici.</p>
-        {% endif %}
+      <img src="{{ member.pokemon.image }}" alt="Image de {{ member.pokemon.nom }}">
+      <p>{{ member.pokemon.nom }}</p>
+      <form action="/equipe_pokemon" method="post">
+        <input type="hidden" name="pokemon_id" value="{{ member.pokemon_id }}">
+        <input type="submit" value="Retirer" name="action">
+      </form>
     </div>
-    <a href="/">Retour à l'accueil</a>
+    {% endfor %}
+    {% else %}
+    <p>Votre équipe est vide. Ajoutez des Pokémon pour les voir ici.</p>
+    {% endif %}
+  </div>
+  <a href="/">Retour à l'accueil</a>
 </body>
 </html>
