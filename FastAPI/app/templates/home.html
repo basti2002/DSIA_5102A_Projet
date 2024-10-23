@@ -20,8 +20,8 @@
         .container {
             padding: 20px;
         }
-        .btn {
-            background-color: #28a745;
+        .btn, .btn-special {
+            background-color: #28a745; /* Vert pour le bouton spécial */
             color: white;
             border: none;
             padding: 10px 20px;
@@ -29,8 +29,8 @@
             border-radius: 5px;
             cursor: pointer;
         }
-        .btn:hover {
-            background-color: #218838;
+        .btn:hover, .btn-special:hover {
+            background-color: #218838; /* Un peu plus sombre lors du survol */
         }
         .btn-danger {
             background-color: #dc3545;
@@ -86,7 +86,9 @@
             bottom: 0;
             left: 0;
         }
-
+        .btn-special {
+            display: none; /* Caché par défaut, affiché par JavaScript si connecté */
+        }
     </style>
 </head>
 <body onload="checkSession();">
@@ -95,14 +97,11 @@
         <div id="userDetails" style="display: none;">
             <span id="welcomeMessage">Bienvenue, </span><span id="usernameDisplay"></span>
             <button onclick="logout()">Déconnexion</button>
+            <button class="btn-special" onclick="window.location.href='/equipe_pokemon'">Mon Équipe Pokémon</button> <!-- Nouveau bouton -->
         </div>        
         <div id="cookieMessage" style="color: red; display: none;">
             <p>Ce site utilise des cookies pour améliorer votre expérience.</p>
             <button id="acceptCookies" class="btn btn-info" onclick="acceptCookies()">Accepter les cookies</button>
-        </div>
-        <div id="userDetails" style="display: none;">
-            <span id="usernameDisplay"></span>
-            <button onclick="logout()">Déconnexion</button>
         </div>
         <button id="userButton" class="btn btn-info" onclick="toggleLoginModal()">Utilisateur</button>
         <div id="loginModal">
@@ -144,9 +143,9 @@
     <div id="cookieStatus"></div>
     <script>
         function acceptCookies() {
-            document.cookie = "cookies_accepted=true; path=/; max-age=" + (60 * 60 * 24 * 30);
-            document.getElementById('cookieMessage').style.display = 'none'; 
-            checkSession(); 
+            document.cookie = "cookies_accepted=true; path=/; max-age=" + (60 * 60 * 24 * 30); // Set cookie for 30 days
+            document.getElementById('cookieMessage').style.display = 'none'; // Hide cookie message
+            checkSession(); // Update session visibility based on cookie acceptance
         }
 
         function toggleLoginModal() {
@@ -159,33 +158,34 @@
             const cookieStatus = document.getElementById('cookieStatus');
             if (cookieValue === 'true') {
                 document.getElementById('cookieMessage').style.display = 'none';
-                cookieStatus.style.backgroundColor = 'green'; 
+                cookieStatus.style.backgroundColor = 'green'; // Green if cookies are accepted
             } else {
                 document.getElementById('cookieMessage').style.display = 'block';
-                cookieStatus.style.backgroundColor = 'red'; 
+                cookieStatus.style.backgroundColor = 'red'; // Red if cookies are not accepted
             }
         }
-
 
         function checkSession() {
             const token = getCookie('access_token');
             const userDetails = document.getElementById('userDetails');
             const usernameDisplay = document.getElementById('usernameDisplay');
+            const teamButton = document.querySelector('.btn-special'); // Sélection du nouveau bouton
 
             if (token) {
                 const payload = decodeJWT(token);
                 if (payload && payload.sub) {
                     usernameDisplay.textContent = payload.sub;
                     userDetails.style.display = 'block';
+                    teamButton.style.display = 'inline-block'; // Afficher le bouton si l'utilisateur est connecté
                 } else {
                     userDetails.style.display = 'none';
+                    teamButton.style.display = 'none'; // Cacher le bouton si pas connecté
                 }
             } else {
                 userDetails.style.display = 'none';
+                teamButton.style.display = 'none'; // Cacher le bouton si pas connecté
             }
         }
-
-
 
         function logout() {
             fetch('/logout', { method: 'POST' })

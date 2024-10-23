@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, Request, Response, status, Form
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from database import SessionLocal
-from models import Pokemon, PokemonType, Type, User, UserSchema
+from models import Pokemon, PokemonType, Type, User, UserSchema, UserPokemonTeam
 from fastapi.templating import Jinja2Templates
 import matplotlib.pyplot as plt
 from io import BytesIO
@@ -93,11 +93,9 @@ def read_type_distribution(db: Session = Depends(get_db)):
     ).join(Type, PokemonType.type_id == Type.type_id)\
      .group_by(Type.type_nom).all()
 
-    # Data for plotting
     type_names = [type_name for type_name, _ in type_distribution]
     counts = [count for _, count in type_distribution]
 
-    # Create a plot
     fig, ax = plt.subplots()
     ax.bar(type_names, counts, color='skyblue')
     ax.set_xlabel('Types de Pokémon')
@@ -105,7 +103,6 @@ def read_type_distribution(db: Session = Depends(get_db)):
     ax.set_title('Distribution des Pokémon par Type')
     plt.xticks(rotation=45)
 
-    # Save plot to a BytesIO object
     buf = BytesIO()
     plt.savefig(buf, format='png')
     plt.close(fig)
@@ -115,30 +112,31 @@ def read_type_distribution(db: Session = Depends(get_db)):
 
 @app.get("/pokemon/view_db")
 def view_db(request: Request, db: Session = Depends(get_db)):
+    # Création d'une requête pour récupérer les noms, images et types des Pokémon
     all_pokemon = db.query(
         Pokemon.nom,
         Pokemon.image,
         Type.type_nom
-    ).select_from(Pokemon)\
-     .join(PokemonType, PokemonType.numero == Pokemon.numero)\
+    ).join(PokemonType, PokemonType.numero == Pokemon.numero)\
      .join(Type, PokemonType.type_id == Type.type_id)\
      .order_by(Pokemon.nom).all()
 
-    pokemon_data = []
-    for pokemon in all_pokemon:
-        if not any(p['nom'] == pokemon.nom for p in pokemon_data):
-            pokemon_data.append({
-                "nom": pokemon.nom,
-                "types": [pokemon.type_nom],
-                "image": pokemon.image
-            })
+    # Dictionnaire pour accumuler les données des Pokémon
+    pokemon_data = {}
+    for nom, image, type_nom in all_pokemon:
+        if nom not in pokemon_data:
+            pokemon_data[nom] = {"nom": nom, "image": image, "types": [type_nom]}
         else:
-            next(p for p in pokemon_data if p['nom'] == pokemon.nom)['types'].append(pokemon.type_nom)
+            pokemon_data[nom]["types"].append(type_nom)
 
+    # Conversion du dictionnaire en liste pour l'affichage
+    pokemon_list = list(pokemon_data.values())
+    
     return templates.TemplateResponse("view_db.html", {
         "request": request,
-        "pokemon_data": pokemon_data
+        "pokemon_data": pokemon_list
     })
+
 
 def create_access_token(data: dict):
     to_encode = data.copy()
@@ -208,7 +206,14 @@ async def create_user(request: Request, db: Session = Depends(get_db), username:
     new_user = User(username=username, hashed_password=hashed_password)
     db.add(new_user)
     db.commit()
+
+    for slot in range(1, 7):  
+        empty_team_member = UserPokemonTeam(user_id=new_user.id, pokemon_id=None, slot=slot)
+        db.add(empty_team_member)
+    db.commit()
+
     return RedirectResponse(url="/users/manage", status_code=status.HTTP_302_FOUND)
+
 
 def authenticate_credentials(db: Session, username: str, password: str):
     user = db.query(User).filter(User.username == username).first()
@@ -270,3 +275,64 @@ async def logout(request: Request):
 @app.get("/favicon.ico")
 async def favicon():
     return Response(status_code=204)
+
+from fastapi import Form
+
+@app.get("/equipe_pokemon")
+async def equipe_pokemon(request: Request, db: Session = Depends(get_db)):
+    user = request.state.user
+    if user:
+        team = db.query(UserPokemonTeam)\
+                 .filter(UserPokemonTeam.user_id == user.id)\
+                 .join(Pokemon, UserPokemonTeam.pokemon_id == Pokemon.numero)\
+                 .all()
+
+        if not team:
+            logger.info(f"No team found for user ID {user.id}, returning empty list.")
+            team = []
+
+        return templates.TemplateResponse("equipe_pokemon.html", {
+            "request": request,
+            "all_pokemon": db.query(Pokemon).all(),
+            "team": team
+        })
+    else:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+
+
+
+
+
+@app.post("/equipe_pokemon")
+async def update_team(request: Request, db: Session = Depends(get_db), pokemon_id: int = Form(...), action: str = Form(...)):
+    user_id = request.state.user.id
+    logger.debug(f"User ID {user_id} is attempting to {action} Pokémon with ID {pokemon_id}")
+
+    if action == "add":
+        try:
+            count = db.query(UserPokemonTeam).filter(UserPokemonTeam.user_id == user_id).count()
+            if count < 6:
+                new_team_member = UserPokemonTeam(user_id=user_id, pokemon_id=pokemon_id, slot=count + 1)
+                db.add(new_team_member)
+                db.commit()
+                logger.info(f"Added Pokémon ID {pokemon_id} to user ID {user_id}'s team")
+            else:
+                logger.warning(f"Team is full for user ID {user_id}")
+        except Exception as e:
+            logger.error(f"Failed to add Pokémon ID {pokemon_id} to user ID {user_id}'s team", exc_info=True)
+            raise HTTPException(status_code=500, detail="Failed to update team")
+    elif action == "remove":
+        try:
+            member_to_remove = db.query(UserPokemonTeam).filter(UserPokemonTeam.user_id == user_id, UserPokemonTeam.pokemon_id == pokemon_id).first()
+            if member_to_remove:
+                db.delete(member_to_remove)
+                db.commit()
+                logger.info(f"Removed Pokémon ID {pokemon_id} from user ID {user_id}'s team")
+            else:
+                logger.warning(f"No Pokémon ID {pokemon_id} found in team for user ID {user_id}")
+        except Exception as e:
+            logger.error(f"Failed to remove Pokémon ID {pokemon_id} from user ID {user_id}'s team", exc_info=True)
+            raise HTTPException(status_code=500, detail="Failed to update team")
+
+    return RedirectResponse(url="/equipe_pokemon", status_code=status.HTTP_303_SEE_OTHER)
+

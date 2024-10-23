@@ -60,6 +60,15 @@ CREATE TABLE users (
     hashed_password TEXT NOT NULL
 );
 
+CREATE TABLE user_pokemon_team (
+    user_id INT,
+    pokemon_id INT,
+    slot INT CHECK (slot BETWEEN 0 AND 6),
+    PRIMARY KEY (user_id, slot),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (pokemon_id) REFERENCES pokemon(numero)
+);
+
 CREATE TABLE posts (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,

@@ -4,25 +4,28 @@
     <meta charset="UTF-8">
     <title>Liste des Pokémon</title>
     <style>
-        .pokemon-button {
+        .pokemon-card {
             display: inline-block;
             margin: 5px;
             background-color: #007BFF; /* Bleu */
             color: white;
-            padding: 10px 20px;
+            padding: 10px;
             text-align: center;
             border: none;
             border-radius: 5px;
             cursor: pointer;
         }
-        .pokemon-button img {
+        .pokemon-card img {
             display: block;
             width: 50px;
             height: auto;
             margin: 0 auto;
         }
-        .pokemon-button:hover {
+        .pokemon-card:hover {
             background-color: #0056b3;
+        }
+        .pokemon-types {
+            font-style: italic;
         }
     </style>
 </head>
@@ -30,9 +33,14 @@
     <h1>Liste des Pokémon</h1>
     <div>
         {% for pokemon in pokemon_data %}
-        <div class="pokemon-button">
+        <div class="pokemon-card">
             <img src="{{ pokemon.image }}" alt="Image de {{ pokemon.nom }}">
-            <strong>{{ pokemon.nom }}</strong> - <em>{{ pokemon.type_nom }}</em>
+            <strong>{{ pokemon.nom }}</strong>
+            <div class="pokemon-types">
+                {% for type in pokemon.types %}
+                    <span>{{ type }}</span>
+                {% endfor %}
+            </div>
         </div>
         {% endfor %}
     </div>

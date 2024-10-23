@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime, timezone, timedelta
@@ -29,20 +29,43 @@ from pydantic import BaseModel
 from datetime import datetime
 
 class User(Base):
-    __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
+    __tablename__ = 'users'
+    id = Column(Integer, primary_key=True)
+    username = Column(String, unique=True)
     hashed_password = Column(String)
     posts = relationship("Post", back_populates="user")
+    pokemon_team = relationship("UserPokemonTeam", back_populates="user")
+
+    def has_space_in_team(self):
+        return len(self.pokemon_team) < 6
+
+
+from sqlalchemy import CheckConstraint
+
+class UserPokemonTeam(Base):
+    __tablename__ = 'user_pokemon_team'
+    user_id = Column(Integer, ForeignKey('users.id'), primary_key=True)
+    pokemon_id = Column(Integer, ForeignKey('pokemon.numero'))
+    slot = Column(Integer, primary_key=True)
+    user = relationship("User", back_populates="pokemon_team")
+    pokemon = relationship("Pokemon")
+
+    __table_args__ = (
+        CheckConstraint('slot >= 0 AND slot <= 6', name='slot_range'),
+    )
+
+
+
 
 class Post(Base):
-    __tablename__ = "posts"
+    __tablename__ = 'posts'
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'))
     title = Column(String)
-    content = Column(Text)
-    created_at = Column(DateTime, default=datetime.now(timezone.utc))
-    user = relationship("User", back_populates="posts")
+    content = Column(String)
+    created_at = Column(DateTime, default=lambda: datetime.now(datetime.timezone.utc))
+    # Lien retour vers User
+    user = relationship('User', back_populates='posts')
 
 class UserSchema(BaseModel):
     id: int
