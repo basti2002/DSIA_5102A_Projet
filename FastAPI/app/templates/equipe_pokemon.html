@@ -46,7 +46,7 @@
   <form action="/equipe_pokemon" method="post">
     <label for="pokemon">Ajouter un Pokémon à votre équipe:</label>
     <select name="pokemon_id" id="pokemon" style="width: 50%">
-      <option></option> <!-- Option vide pour la clarté avec allowClear -->
+      <option></option> 
       {% for pokemon in all_pokemon %}
       <option value="{{ pokemon.numero }}">{{ pokemon.nom }}</option>
       {% endfor %}
@@ -54,7 +54,6 @@
 
     <input type="hidden" name="user_id" value="{{ user.id }}">
     
-    <!-- Calcul dynamique du slot_number basé sur la taille actuelle de l'équipe -->
     <input type="hidden" name="slot_number" value="{{ team|length + 1 }}">
     
     <input type="submit" value="Ajouter" name="action">
@@ -64,22 +63,25 @@
   {% endif %}
 
   <h2>Votre Équipe</h2>
+<div>
+  {% if team %}
+  {% for member in team %}
   <div>
-    {% if team %}
-    {% for member in team %}
-    <div>
-      <img src="{{ member.pokemon.image }}" alt="Image de {{ member.pokemon.nom }}">
-      <p>{{ member.pokemon.nom }}</p>
-      <form action="/equipe_pokemon" method="post">
-        <input type="hidden" name="pokemon_id" value="{{ member.pokemon_id }}">
-        <input type="submit" value="Retirer" name="action">
-      </form>
-    </div>
-    {% endfor %}
-    {% else %}
-    <p>Votre équipe est vide. Ajoutez des Pokémon pour les voir ici.</p>
-    {% endif %}
+    <img src="{{ member.pokemon.image }}" alt="Image de {{ member.pokemon.nom }}">
+    <p>{{ member.pokemon.nom }}</p>
+    <form action="/equipe_pokemon" method="post">
+      <input type="hidden" name="pokemon_id" value="{{ member.pokemon_id }}">
+      <input type="hidden" name="slot_number" value="{{ member.slot }}">
+      <input type="hidden" name="user_id" value="{{ user.id }}">
+      <input type="submit" value="Retirer" name="action">
+    </form>
   </div>
+  {% endfor %}
+  {% else %}
+  <p>Votre équipe est vide. Ajoutez des Pokémon pour les voir ici.</p>
+  {% endif %}
+</div>
+
   <a href="/">Retour à l'accueil</a>
 </body>
 </html>

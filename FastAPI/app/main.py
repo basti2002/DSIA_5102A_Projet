@@ -282,17 +282,15 @@ from fastapi import Form
 async def equipe_pokemon(request: Request, db: Session = Depends(get_db)):
     user = request.state.user
     if user:
-        # Récupération de l'équipe actuelle du joueur
         team = db.query(UserPokemonTeam).filter(UserPokemonTeam.user_id == user.id).join(Pokemon, UserPokemonTeam.pokemon_id == Pokemon.numero).all()
 
-        # Afficher l'équipe, même si elle est vide
         if not team:
             logger.info(f"Aucune équipe trouvée pour l'utilisateur {user.id}, équipe vide.")
             team = []
 
         return templates.TemplateResponse("equipe_pokemon.html", {
             "request": request,
-            "user": user,  # Ajoutez cette ligne
+            "user": user, 
             "all_pokemon": db.query(Pokemon).all(),
             "team": team
         })
@@ -300,48 +298,71 @@ async def equipe_pokemon(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Utilisateur non authentifié")
 
 
+from sqlalchemy.exc import IntegrityError
 
 @app.post("/equipe_pokemon")
-async def update_team(request: Request, db: Session = Depends(get_db), pokemon_id: int = Form(...), user_id: int = Form(...), slot_number: int = Form(...), action: str = Form(...)):
+async def update_team(
+    request: Request, 
+    db: Session = Depends(get_db), 
+    pokemon_id: int = Form(...), 
+    user_id: int = Form(...), 
+    slot_number: int = Form(...), 
+    action: str = Form(...)
+):
     user = request.state.user
-    logger.info(f"Requête reçue - pokemon_id: {pokemon_id}, user_id: {user_id}, slot_number: {slot_number}, action: {action}, user: {user.username}")
-    
-    logger.info(f"Utilisateur : {user.username} (ID : {user_id})")
-    logger.info(f"Pokémon : {pokemon_id}")
-    logger.info(f"Slot : {slot_number}")
-    
     if not user:
         raise HTTPException(status_code=401, detail="Utilisateur non authentifié")
 
-    if action == "Ajouter":
-        # Vérifie que l'utilisateur n'a pas déjà 6 Pokémon
-        team_size = db.query(UserPokemonTeam).filter(
-            UserPokemonTeam.user_id == request.state.user.id,
-            UserPokemonTeam.pokemon_id.isnot(None)  # Ne compte que les slots déjà remplis
-        ).count()
+    try:
+        if action == "Ajouter":
+            team_size = db.query(UserPokemonTeam).filter(
+                UserPokemonTeam.user_id == user.id,
+                UserPokemonTeam.pokemon_id.isnot(None)
+            ).count()
 
-        if team_size >= 6:
-            raise HTTPException(status_code=400, detail="L'équipe est déjà pleine")
+            if team_size >= 6:
+                raise HTTPException(status_code=400, detail="L'équipe est déjà pleine.")
 
-        # Trouver le slot spécifié
-        slot = db.query(UserPokemonTeam).filter(
-            UserPokemonTeam.user_id == request.state.user.id,
-            UserPokemonTeam.slot == slot_number,
-            UserPokemonTeam.pokemon_id.is_(None)  # Seulement les slots vides
-        ).first()
+            slot = db.query(UserPokemonTeam).filter(
+                UserPokemonTeam.user_id == user.id,
+                UserPokemonTeam.slot == slot_number
+            ).first()
 
-        if slot:
-            # Ajouter le Pokémon au slot spécifié
-            slot.pokemon_id = pokemon_id
+            if slot and slot.pokemon_id is None:
+                slot.pokemon_id = pokemon_id
+            elif not slot:
+                new_slot = UserPokemonTeam(user_id=user.id, slot=slot_number, pokemon_id=pokemon_id)
+                db.add(new_slot)
+            else:
+                raise HTTPException(status_code=400, detail="Slot non disponible ou déjà rempli.")
+
             db.commit()
-            logger.info(f"Ajout du Pokémon {pokemon_id} dans le slot {slot_number} pour l'utilisateur {request.state.user.id}")
-        else:
-            raise HTTPException(status_code=400, detail="Slot non disponible ou déjà rempli.")
+
+        elif action == "Retirer":
+            pokemon_to_remove = db.query(UserPokemonTeam).filter(
+                UserPokemonTeam.user_id == user.id,
+                UserPokemonTeam.pokemon_id == pokemon_id,
+                UserPokemonTeam.slot == slot_number
+            ).first()
+
+            if pokemon_to_remove:
+                db.delete(pokemon_to_remove)
+                db.commit()
+
+                remaining_team = db.query(UserPokemonTeam).filter(
+                    UserPokemonTeam.user_id == user.id
+                ).order_by(UserPokemonTeam.slot).all()
+
+                for i, team_member in enumerate(remaining_team, start=1):
+                    team_member.slot = i
+
+                db.commit()
+
+            else:
+                raise HTTPException(status_code=400, detail="Pokémon non trouvé dans le slot spécifié.")
+
+    except IntegrityError as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
     return RedirectResponse(url="/equipe_pokemon", status_code=status.HTTP_303_SEE_OTHER)
-
-
-
-
-
-
