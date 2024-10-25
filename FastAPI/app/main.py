@@ -18,6 +18,7 @@ from fastapi import HTTPException
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 app = FastAPI()
+
 templates = Jinja2Templates(directory="templates")
 
 import logging
@@ -65,11 +66,14 @@ def check_user_logged_in(token: str):
         logger.error(f"Token validation error: {str(e)}")
         return False
 
-
 from fastapi.responses import HTMLResponse
 
 @app.get("/")
 async def home(request: Request, db: Session = Depends(get_db), token: Optional[str] = Depends(oauth2_scheme)):
+    pokemon_count = db.query(Pokemon).count()
+    if pokemon_count < 300:
+        return templates.TemplateResponse("loading.html", {"request": request})
+
     if token:
         try:
             payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
@@ -79,11 +83,14 @@ async def home(request: Request, db: Session = Depends(get_db), token: Optional[
                 return templates.TemplateResponse("home.html", {"request": request, "user": user.username})
         except JWTError as e:
             logger.error(f"Failed to decode JWT: {e}")
+
     logger.info("Home page accessed anonymously")
     return templates.TemplateResponse("home.html", {"request": request, "user": None})
 
-
-
+@app.get("/api/pokemon/count")
+async def get_pokemon_count(db: Session = Depends(get_db)):
+    count = db.query(Pokemon).count()
+    return {"count": count}
 
 
 @app.get("/pokemon/type_count", response_class=Response)
