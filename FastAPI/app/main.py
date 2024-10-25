@@ -13,11 +13,14 @@ from datetime import datetime, timezone, timedelta
 from typing import List
 from passlib.context import CryptContext
 from fastapi import HTTPException
-
+from fastapi.staticfiles import StaticFiles
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 app = FastAPI()
+
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
 

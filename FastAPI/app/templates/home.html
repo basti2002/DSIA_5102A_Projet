@@ -7,13 +7,14 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background-color: #182940;
             margin: 0;
             padding: 0;
+            color: #F2F2F2; 
         }
         header {
-            background-color: #007BFF;
-            color: #fff;
+            background-color: #182940; 
+            color: #F2F2F2; 
             text-align: center;
             padding: 1rem;
         }
@@ -21,8 +22,8 @@
             padding: 20px;
         }
         .btn, .btn-special {
-            background-color: #28a745; /* Vert pour le bouton spécial */
-            color: white;
+            background-color: #49668C; 
+            color: white; 
             border: none;
             padding: 10px 20px;
             margin: 10px;
@@ -30,33 +31,21 @@
             cursor: pointer;
         }
         .btn:hover, .btn-special:hover {
-            background-color: #218838; /* Un peu plus sombre lors du survol */
-        }
-        .btn-danger {
-            background-color: #dc3545;
-        }
-        .btn-danger:hover {
-            background-color: #c82333;
+            background-color: #354f66; 
         }
         .btn-primary {
-            background-color: #007bff;
+            background-color: #49668C; 
         }
         .btn-primary:hover {
-            background-color: #0069d9;
-        }
-        .btn-reset {
-            background-color: #ffc107;
-        }
-        .btn-reset:hover {
-            background-color: #e0a800;
+            background-color: #354f66;
         }
         .btn-info {
-            background-color: #17a2b8;
+            background-color: #17a2b8; 
         }
         .btn-info:hover {
             background-color: #138496;
         }
-        #loginModal{
+        #loginModal, #cookieMessage {
             display: none;
             position: absolute;
             top: 60px;
@@ -66,18 +55,7 @@
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
             z-index: 1000;
-        }
-        #cookieMessage {
-            display: block;
-            position: absolute;
-            top: 60px;
-            right: 20px;
-            background: white;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            color: red;
+            color: black;
         }
         #cookieStatus {
             width: 100%;
@@ -85,11 +63,13 @@
             position: fixed;
             bottom: 0;
             left: 0;
+            background: #182940; 
         }
         .btn-special {
-            display: none; /* Caché par défaut, affiché par JavaScript si connecté */
+            display: none;
         }
     </style>
+    
 </head>
 <body onload="checkSession();">
     <header>
@@ -99,7 +79,7 @@
             <button onclick="logout()">Déconnexion</button>
             <button class="btn-special" onclick="window.location.href='/equipe_pokemon'">Mon Équipe Pokémon</button> <!-- Nouveau bouton -->
         </div>        
-        <div id="cookieMessage" style="color: red; display: none;">
+        <div id="cookieMessage" style="color: black; display: none;">
             <p>Ce site utilise des cookies pour améliorer votre expérience.</p>
             <button id="acceptCookies" class="btn btn-info" onclick="acceptCookies()">Accepter les cookies</button>
         </div>
@@ -121,31 +101,16 @@
         <form action="/pokemon/view_db">
             <button class="btn" type="submit">Observer les valeurs de la DB</button>
         </form>
-        <form action="/pokemon/add_value">
-            <button class="btn btn-primary" type="submit">Ajouter une valeur</button>
-        </form>
-        <form action="/pokemon/delete_value">
-            <button class="btn btn-danger" type="submit">Supprimer une valeur</button>
-        </form>
-        <form action="/pokemon/reset_db">
-            <button class="btn btn-reset" type="submit">Remettre à 0 la DB</button>
-        </form>
-        <form action="/users">
-            <button class="btn btn-info" type="submit">Voir les utilisateurs</button>
-        </form>
         <form action="/users/manage">
             <button class="btn btn-info" type="submit">Gérer les utilisateurs</button>
-        </form>
-        <form action="/users/create" method="post">
-            <button class="btn btn-info" type="submit">Créer un utilisateur</button>
         </form>
     </div>
     <div id="cookieStatus"></div>
     <script>
         function acceptCookies() {
-            document.cookie = "cookies_accepted=true; path=/; max-age=" + (60 * 60 * 24 * 30); // Set cookie for 30 days
-            document.getElementById('cookieMessage').style.display = 'none'; // Hide cookie message
-            checkSession(); // Update session visibility based on cookie acceptance
+            document.cookie = "cookies_accepted=true; path=/; max-age=" + (60 * 60 * 24 * 30);
+            document.getElementById('cookieMessage').style.display = 'none'; 
+            checkSession(); 
         }
 
         function toggleLoginModal() {
@@ -158,10 +123,10 @@
             const cookieStatus = document.getElementById('cookieStatus');
             if (cookieValue === 'true') {
                 document.getElementById('cookieMessage').style.display = 'none';
-                cookieStatus.style.backgroundColor = 'green'; // Green if cookies are accepted
+                cookieStatus.style.backgroundColor = 'green'; 
             } else {
                 document.getElementById('cookieMessage').style.display = 'block';
-                cookieStatus.style.backgroundColor = 'red'; // Red if cookies are not accepted
+                cookieStatus.style.backgroundColor = 'red'; 
             }
         }
 
@@ -169,21 +134,21 @@
             const token = getCookie('access_token');
             const userDetails = document.getElementById('userDetails');
             const usernameDisplay = document.getElementById('usernameDisplay');
-            const teamButton = document.querySelector('.btn-special'); // Sélection du nouveau bouton
+            const teamButton = document.querySelector('.btn-special'); 
 
             if (token) {
                 const payload = decodeJWT(token);
                 if (payload && payload.sub) {
                     usernameDisplay.textContent = payload.sub;
                     userDetails.style.display = 'block';
-                    teamButton.style.display = 'inline-block'; // Afficher le bouton si l'utilisateur est connecté
+                    teamButton.style.display = 'inline-block'; 
                 } else {
                     userDetails.style.display = 'none';
-                    teamButton.style.display = 'none'; // Cacher le bouton si pas connecté
+                    teamButton.style.display = 'none';
                 }
             } else {
                 userDetails.style.display = 'none';
-                teamButton.style.display = 'none'; // Cacher le bouton si pas connecté
+                teamButton.style.display = 'none';
             }
         }
 
