@@ -4,46 +4,90 @@
     <meta charset="UTF-8">
     <title>Liste des Pokémon</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #182940;
+            color: #F2F2F2;
+            margin: 0;
+            padding: 20px;
+        }
+        header, footer {
+            background-color: #182940;
+            color: #F2F2F2;
+            padding: 10px 0;
+            text-align: center;
+        }
         .pokemon-card {
             display: inline-block;
-            margin: 5px;
-            background-color: #007BFF; /* Bleu */
-            color: white;
+            width: 140px;
+            height: 220px; 
+            margin: 10px;
+            background-color: #49668C; 
+            color: #F2F2F2; 
             padding: 10px;
             text-align: center;
-            border: none;
             border-radius: 5px;
-            cursor: pointer;
+            vertical-align: top; 
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); 
         }
         .pokemon-card img {
-            display: block;
-            width: 50px;
-            height: auto;
-            margin: 0 auto;
+            width: 100%;
+            height: 100px;
+            object-fit: contain;
+            margin-bottom: 5px;
         }
-        .pokemon-card:hover {
-            background-color: #0056b3;
+        .pokemon-card h3 {
+            margin: 5px 0; 
+            font-size: 16px;
+            height: 20px;
         }
         .pokemon-types {
             font-style: italic;
+            font-size: 12px; 
+            height: 30px;
+            overflow: hidden;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .type {
+            margin-right: 5px;
+            margin-bottom: 5px;
+            background-color: #354f66;
+            border-radius: 3px;
+            padding: 2px 5px;
+        }
+        a {
+            color: #D99962;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
-    <h1>Liste des Pokémon</h1>
+    <header>
+        <h1>Liste des Pokémon</h1>
+    </header>
+
     <div>
         {% for pokemon in pokemon_data %}
-        <div class="pokemon-card">
-            <img src="{{ pokemon.image }}" alt="Image de {{ pokemon.nom }}">
-            <strong>{{ pokemon.nom }}</strong>
-            <div class="pokemon-types">
-                {% for type in pokemon.types %}
-                    <span>{{ type }}</span>
-                {% endfor %}
+            <div class="pokemon-card">
+                <img src="{{ pokemon.image }}" alt="Image de {{ pokemon.nom }}">
+                <h3>{{ pokemon.nom }}</h3>
+                <div class="pokemon-types">
+                    {% for type in pokemon.types %}
+                        <span class="type">{{ type }}</span>
+                    {% endfor %}
+                </div>
             </div>
-        </div>
         {% endfor %}
     </div>
-    <a href="/">Retour à l'accueil</a>
+    
+    <footer>
+        <a href="/">Retour à l'accueil</a>
+    </footer>
 </body>
 </html>

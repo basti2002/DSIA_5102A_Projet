@@ -6,13 +6,13 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background-color: #F2F2F2;
             margin: 0;
             padding: 0;
         }
         header {
-            background-color: #007BFF;
-            color: #fff;
+            background-color: #182940;
+            color: #F2F2F2;
             text-align: center;
             padding: 1rem;
         }
@@ -20,8 +20,8 @@
             padding: 20px;
         }
         button {
-            background-color: #28a745;
-            color: white;
+            background-color: #49668C;
+            color: #F2F2F2;
             border: none;
             padding: 10px 20px;
             margin: 10px;
@@ -29,14 +29,18 @@
             cursor: pointer;
         }
         button:hover {
-            background-color: #218838;
+            background-color: #354f66;
         }
         input[type="text"], input[type="password"] {
             padding: 8px;
             margin: 10px;
             border-radius: 5px;
-            border: 1px solid #ccc;
+            border: 1px solid #F2F2F2;
             display: block;
+        }
+        input::placeholder { 
+            color: #0D0D0D; 
+            opacity: 0.5; 
         }
     </style>
 </head>
@@ -48,8 +52,8 @@
     <div class="container">
         <h2>Ajouter un Utilisateur</h2>
         <form action="/users/create" method="post">
-            <input type="text" name="username" required>
-            <input type="password" name="password" required>
+            <input type="text" name="username" placeholder="Nom utilisateur" required>
+            <input type="password" name="password" placeholder="Mot de passe" required>
             <button type="submit">Submit</button>
         </form>
 
@@ -62,7 +66,6 @@
     </div>
 
     <script>
-        // Ici vous pouvez ajouter les scripts que vous pensez nécessaires pour votre page
     </script>
 </body>
 </html>

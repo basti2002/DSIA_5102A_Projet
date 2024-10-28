@@ -6,41 +6,36 @@
     <title>Accueil Pokémon</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #182940;
+            font-family: 'Arial', sans-serif;
+            background-color: #F2F2F2;
             margin: 0;
             padding: 0;
-            color: #F2F2F2; 
         }
-        header {
-            background-color: #182940; 
-            color: #F2F2F2; 
+        header, footer {
+            background-color: #182940;
+            color: #F2F2F2;
             text-align: center;
             padding: 1rem;
         }
         .container {
             padding: 20px;
         }
-        .btn, .btn-special {
-            background-color: #49668C; 
-            color: white; 
+        .btn, .btn-special, .btn-primary {
+            background-color: #49668C;
+            color: white;
             border: none;
             padding: 10px 20px;
             margin: 10px;
             border-radius: 5px;
             cursor: pointer;
+            transition: background-color 0.3s ease;
         }
-        .btn:hover, .btn-special:hover {
-            background-color: #354f66; 
-        }
-        .btn-primary {
-            background-color: #49668C; 
-        }
-        .btn-primary:hover {
+        .btn:hover, .btn-special:hover, .btn-primary:hover {
             background-color: #354f66;
         }
         .btn-info {
-            background-color: #17a2b8; 
+            background-color: #17a2b8;
+            color: #F2F2F2;
         }
         .btn-info:hover {
             background-color: #138496;
@@ -54,8 +49,7 @@
             padding: 20px;
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            color: black;
+            color: #0D0D0D;
         }
         #cookieStatus {
             width: 100%;
@@ -63,10 +57,7 @@
             position: fixed;
             bottom: 0;
             left: 0;
-            background: #182940; 
-        }
-        .btn-special {
-            display: none;
+            background: #182940;
         }
     </style>
     
