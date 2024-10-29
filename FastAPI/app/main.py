@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, Request, Response, status, Form
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from database import SessionLocal
-from models import Pokemon, PokemonType, Type, User, UserSchema, UserPokemonTeam
+from models import Pokemon, PokemonType, Type, User, UserSchema, UserPokemonTeam, Sensibilite, PokemonSensibilite
 from fastapi.templating import Jinja2Templates
 import matplotlib.pyplot as plt
 from io import BytesIO

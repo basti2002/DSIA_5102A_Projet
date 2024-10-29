@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer,Float, String, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime, timezone, timedelta
@@ -7,8 +7,12 @@ class Pokemon(Base):
     __tablename__ = 'pokemon'
     numero = Column(Integer, primary_key=True)
     nom = Column(String)
+    image_mini = Column(String)
+    lien = Column(String)
     image = Column(String)
+    # Relations
     types = relationship("Type", secondary="pokemon_type", back_populates="pokemons")
+    sensibilites = relationship("PokemonSensibilite", back_populates="pokemon")
 
 class Type(Base):
     __tablename__ = 'type'
@@ -16,11 +20,25 @@ class Type(Base):
     type_nom = Column(String, unique=True)
     pokemons = relationship("Pokemon", secondary="pokemon_type", back_populates="types")
 
-
 class PokemonType(Base):
     __tablename__ = 'pokemon_type'
     numero = Column(Integer, ForeignKey('pokemon.numero'), primary_key=True)
     type_id = Column(Integer, ForeignKey('type.type_id'), primary_key=True)
+
+class Sensibilite(Base):
+    __tablename__ = 'sensibilite'
+    sensibilite_id = Column(Integer, primary_key=True)
+    valeur = Column(Float, unique=True)
+
+class PokemonSensibilite(Base):
+    __tablename__ = 'pokemon_sensibilite'
+    numero = Column(Integer, ForeignKey('pokemon.numero'), primary_key=True)
+    type_id = Column(Integer, ForeignKey('type.type_id'), primary_key=True)
+    sensibilite_id = Column(Integer, ForeignKey('sensibilite.sensibilite_id'), primary_key=True)
+    # Relations
+    pokemon = relationship("Pokemon", back_populates="sensibilites")
+    type = relationship("Type")
+    sensibilite = relationship("Sensibilite")
     
 from sqlalchemy import Column, Integer, String, ForeignKey, Text, DateTime
 from sqlalchemy.orm import relationship
@@ -73,5 +91,3 @@ class UserSchema(BaseModel):
 
     class Config:
         orm_mode = True
-
-

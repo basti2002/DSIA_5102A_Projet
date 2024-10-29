@@ -22,8 +22,7 @@
         }
         .pokemon-card {
             display: inline-block;
-            width: 140px; 
-            height: 220px; 
+            width: 200px; /* Ajusted width for better content fit */
             margin: 10px;
             background-color: #49668C; 
             color: #F2F2F2; 
@@ -33,33 +32,51 @@
             vertical-align: top; 
             overflow: hidden; 
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        .pokemon-card:hover {
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
         }
         .pokemon-card img {
             width: 100%;
-            height: 100px;
+            height: auto;
             object-fit: contain;
             margin-bottom: 5px;
         }
-        .pokemon-card h3 {
+        .pokemon-card h3, .pokemon-card h4 {
             margin: 5px 0; 
             font-size: 16px; 
-            height: 20px;
         }
-        .pokemon-types {
+        .pokemon-types, .pokemon-sensibilities {
             font-style: italic;
-            font-size: 12px; 
-            height: 30px; 
-            overflow: hidden; 
+            font-size: 12px;
+            overflow: hidden;
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
         }
-        .type {
-            margin-right: 5px;
-            margin-bottom: 5px;
+        .pokemon-sensibilities h4 {
+            margin-bottom: 10px; /* Ajuste l'espacement entre le titre et les sensibilités */
+        }
+
+        .sensibility-value {
+            display: inline-block;
+            background-color: #D99962; /* Couleur choisie pour le fond */
+            color: #182940; /* Couleur du texte pour assurer un bon contraste */
+            margin: 2px;
+            padding: 5px 10px;
+            border-radius: 10px; /* Arrondissement des coins pour les rectangles */
+            font-weight: bold; /* Texte en gras pour les valeurs */
+        }
+        .type, .sensibility {
+            margin: 2px 5px;
             background-color: #354f66; 
             border-radius: 3px; 
-            padding: 2px 5px; 
+            padding: 2px 5px;
+        }
+        .sensibility {
+            font-style: normal;
+            background-color: #6f8ba4;
         }
         a {
             color: #D99962;
@@ -71,13 +88,11 @@
         .select2-container--default .select2-results__option {
             color: black; 
         }
-
         .select2-container--default .select2-results__option--highlighted[aria-selected] {
             background-color: #49668C;
             color: white;
         }
-
-  </style>
+    </style>
   <script>
     $(document).ready(function() {
       $('#pokemon').select2({
@@ -114,51 +129,62 @@
   </script>
 </head>
 <body>
-  <header>
-      <h1>Équipe Pokémon</h1>
-  </header>
-
-  <form action="/equipe_pokemon" method="post">
-      <label for="pokemon">Ajouter un Pokémon à votre équipe:</label>
-      <select name="pokemon_id" id="pokemon" style="width: 50%">
-          <option></option>
-          {% for pokemon in all_pokemon %}
-          <option value="{{ pokemon.numero }}">{{ pokemon.nom }}</option>
-          {% endfor %}
-      </select>
-
-      <input type="hidden" name="user_id" value="{{ user.id }}">
-      <input type="hidden" name="slot_number" value="{{ team|length + 1 }}">
-      <input type="submit" value="Ajouter" name="action">
-  </form>
-
-  <h2>Votre Équipe</h2>
-  <div>
-    {% if team %}
-    {% for member in team %}
-        <div class="pokemon-card">
-            <img src="{{ member.pokemon.image }}" alt="Image de {{ member.pokemon.nom }}">
-            <h3>{{ member.pokemon.nom }}</h3>
-            <div class="pokemon-types">
-                {% for type in member.pokemon.types %}
-                <span class="type">{{ type.type_nom }}</span>
-                {% endfor %}
-            </div>
-            <form action="/equipe_pokemon" method="post">
-                <input type="hidden" name="pokemon_id" value="{{ member.pokemon_id }}">
-                <input type="hidden" name="slot_number" value="{{ member.slot }}">
-                <input type="hidden" name="user_id" value="{{ user.id }}">
-                <input type="submit" value="Retirer" name="action">
-            </form>
-        </div>
-    {% endfor %}
-    {% else %}
-    <p>Votre équipe est vide. Ajoutez des Pokémon pour les voir ici.</p>
-    {% endif %}    
-  </div>
-
-  <footer>
-      <a href="/">Retour à l'accueil</a>
-  </footer>
-</body>
-</html>
+    <header>
+        <h1>Équipe Pokémon</h1>
+    </header>
+  
+    <form action="/equipe_pokemon" method="post">
+        <label for="pokemon">Ajouter un Pokémon à votre équipe:</label>
+        <select name="pokemon_id" id="pokemon" style="width: 50%">
+            <option></option>
+            {% for pokemon in all_pokemon %}
+            <option value="{{ pokemon.numero }}">{{ pokemon.nom }}</option>
+            {% endfor %}
+        </select>
+  
+        <input type="hidden" name="user_id" value="{{ user.id }}">
+        <input type="hidden" name="slot_number" value="{{ team|length + 1 }}">
+        <input type="submit" value="Ajouter" name="action">
+    </form>
+  
+    <h2>Votre Équipe</h2>
+    <div>
+      {% if team %}
+      {% for member in team %}
+          <div class="pokemon-card">
+              <img src="{{ member.pokemon.image }}" alt="Image de {{ member.pokemon.nom }}">
+              <h3>{{ member.pokemon.nom }}</h3>
+              <div class="pokemon-types">
+                  {% for type in member.pokemon.types %}
+                  <span class="type">{{ type.type_nom }}</span>
+                  {% endfor %}
+              </div>
+              <div class="pokemon-sensibilities">
+                <h4>Sensibilités:</h4>
+                <div class="sensibility-values">
+                    {% for sensibilite in member.pokemon.sensibilites %}
+                    <div class="sensibility-value">
+                        {{ sensibilite.type.type_nom }}: {{ sensibilite.sensibilite.valeur }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>          
+              <form action="/equipe_pokemon" method="post">
+                  <input type="hidden" name="pokemon_id" value="{{ member.pokemon_id }}">
+                  <input type="hidden" name="slot_number" value="{{ member.slot }}">
+                  <input type="hidden" name="user_id" value="{{ user.id }}">
+                  <input type="submit" value="Retirer" name="action">
+              </form>
+          </div>
+      {% endfor %}
+      {% else %}
+      <p>Votre équipe est vide. Ajoutez des Pokémon pour les voir ici.</p>
+      {% endif %}    
+    </div>
+  
+    <footer>
+        <a href="/">Retour à l'accueil</a>
+    </footer>
+  </body>
+  </html>
+  
