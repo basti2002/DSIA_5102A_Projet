@@ -14,6 +14,8 @@ from typing import List
 from passlib.context import CryptContext
 from fastapi import HTTPException
 from fastapi.staticfiles import StaticFiles
+import numpy as np
+import base64
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -288,21 +290,75 @@ async def favicon():
 
 from fastapi import Form
 
-@app.get("/equipe_pokemon")
+
+def base64_encode(value):
+    return base64.b64encode(value).decode("utf-8")
+
+# Ajouter le filtre à l'environnement Jinja2
+templates.env.filters['b64encode'] = base64_encode
+
+
+@app.get("/equipe_pokemon", response_class=HTMLResponse)
 async def equipe_pokemon(request: Request, db: Session = Depends(get_db)):
     user = request.state.user
     if user:
+        # Récupérer l'équipe de Pokémon de l'utilisateur
         team = db.query(UserPokemonTeam).filter(UserPokemonTeam.user_id == user.id).join(Pokemon, UserPokemonTeam.pokemon_id == Pokemon.numero).all()
 
         if not team:
             logger.info(f"Aucune équipe trouvée pour l'utilisateur {user.id}, équipe vide.")
             team = []
 
+        # Calculer les sensibilités agrégées pour chaque type
+        type_sensibility_totals = {}
+        for member in team:
+            for sensibilite in member.pokemon.sensibilites:
+                type_nom = sensibilite.type.type_nom
+                valeur = sensibilite.sensibilite.valeur
+                type_sensibility_totals[type_nom] = type_sensibility_totals.get(type_nom, 0) + valeur
+
+        # Organiser les données pour le graphique
+        types = list(type_sensibility_totals.keys())
+        valeurs = list(type_sensibility_totals.values())
+
+        # Trouver les 2 points faibles et les 2 points forts
+        sorted_indices = np.argsort(valeurs)
+        points_faibles = sorted_indices[-2:]
+        points_forts = sorted_indices[:2]
+
+        # Créer le diagramme en étoile
+        fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
+        angles = np.linspace(0, 2 * np.pi, len(types), endpoint=False).tolist()
+        valeurs += valeurs[:1]  # Boucler le graphique
+        angles += angles[:1]
+
+        ax.fill(angles, valeurs, color='#FFA07A', alpha=0.25)
+        ax.plot(angles, valeurs, color='#FFA07A', linewidth=2)
+
+        # Colorer les points forts et faibles
+        for i in points_faibles:
+            ax.plot([angles[i], angles[i]], [0, valeurs[i]], color='red', linewidth=3)
+        for i in points_forts:
+            ax.plot([angles[i], angles[i]], [0, valeurs[i]], color='green', linewidth=3)
+
+        ax.set_yticklabels([])
+        ax.set_xticks(angles[:-1])
+        ax.set_xticklabels(types)
+
+        # Sauvegarder le diagramme dans un buffer pour l'afficher dans le template
+        buf = BytesIO()
+        plt.savefig(buf, format="png")
+        plt.close(fig)
+        buf.seek(0)
+        img_data = buf.getvalue()
+
+        # Passer les données à TemplateResponse pour le rendu HTML
         return templates.TemplateResponse("equipe_pokemon.html", {
             "request": request,
             "user": user, 
             "all_pokemon": db.query(Pokemon).all(),
-            "team": team
+            "team": team,
+            "radar_chart": img_data
         })
     else:
         raise HTTPException(status_code=401, detail="Utilisateur non authentifié")

@@ -181,6 +181,13 @@
       <p>Votre équipe est vide. Ajoutez des Pokémon pour les voir ici.</p>
       {% endif %}    
     </div>
+    
+    {% if radar_chart %}
+        <h2>Statistiques de l'Équipe</h2>
+        <div style="text-align: center; margin-top: 20px;">
+            <img src="data:image/png;base64,{{ radar_chart | b64encode }}" alt="Diagramme en étoile des sensibilités" />
+        </div>
+    {% endif %}
   
     <footer>
         <a href="/">Retour à l'accueil</a>
