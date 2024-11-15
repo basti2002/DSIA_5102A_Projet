@@ -98,29 +98,25 @@ async def get_pokemon_count(db: Session = Depends(get_db)):
     return {"count": count}
 
 
-@app.get("/pokemon/type_count", response_class=Response)
-def read_type_distribution(db: Session = Depends(get_db)):
-    type_distribution = db.query(
-        Type.type_nom, func.count(PokemonType.numero).label('count')
-    ).join(Type, PokemonType.type_id == Type.type_id)\
-     .group_by(Type.type_nom).all()
+@app.get("/pokemon/type_count", response_class=HTMLResponse)
+async def read_type_distribution(request: Request, limit: int = None, db: Session = Depends(get_db)):
+    if limit is None:
+        return RedirectResponse(url="/pokemon/type_count?limit=5", status_code=status.HTTP_303_SEE_OTHER)
 
-    type_names = [type_name for type_name, _ in type_distribution]
-    counts = [count for _, count in type_distribution]
+    type_distribution = (
+        db.query(
+            Type.type_nom,
+            func.count(PokemonType.numero).label('count')
+        )
+        .join(PokemonType, PokemonType.type_id == Type.type_id)
+        .group_by(Type.type_nom)
+        .order_by(func.count(PokemonType.numero).desc())
+        .limit(limit)
+        .all()
+    )
+    data = [{"type_name": name, "count": count} for name, count in type_distribution]
+    return templates.TemplateResponse("type_count.html", {"request": request, "data": data, "limit": limit})
 
-    fig, ax = plt.subplots()
-    ax.bar(type_names, counts, color='skyblue')
-    ax.set_xlabel('Types de Pokémon')
-    ax.set_ylabel('Nombre de Pokémon')
-    ax.set_title('Distribution des Pokémon par Type')
-    plt.xticks(rotation=45)
-
-    buf = BytesIO()
-    plt.savefig(buf, format='png')
-    plt.close(fig)
-    buf.seek(0)
-
-    return Response(content=buf.getvalue(), media_type="image/png")
 
 @app.get("/pokemon/view_db")
 def view_db(request: Request, db: Session = Depends(get_db)):

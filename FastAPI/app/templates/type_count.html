@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Distribution des Types de Pokémon</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #182940;
+            color: #F2F2F2;
+            margin: 0;
+            padding: 20px;
+        }
+        header, footer {
+            background-color: #182940;
+            color: #F2F2F2;
+            padding: 10px 0;
+            text-align: center;
+        }
+        .chart-container {
+            width: 90%;
+            height: 600px;
+            margin: 20px auto;
+            background-color: #49668C;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        select {
+            padding: 10px;
+            margin: 10px;
+            background-color: #354F66;
+            color: #F2F2F2;
+            border: none;
+            font-size: 16px;
+        }
+        a {
+            color: #D99962;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Distribution des Types de Pokémon</h1>
+    </header>
+    
+    <div>
+        <label for="typeLimit">Choisissez le nombre de types à afficher :</label>
+        <select id="typeLimit" onchange="updateChart()">
+            <option value="5" {% if limit == 5 %}selected{% endif %}>5</option>
+            <option value="10" {% if limit == 10 %}selected{% endif %}>10</option>
+            <option value="15" {% if limit == 15 %}selected{% endif %}>15</option>
+            <option value="20" {% if limit == 20 %}selected{% endif %}>20</option>
+        </select>
+    </div>
+        
+    <div class="chart-container">
+        <canvas id="typeChart"></canvas>
+    </div>
+    
+    <script>
+        document.getElementById('typeLimit').addEventListener('change', function() {
+            const newLimit = this.value;
+            window.location.href = `/pokemon/type_count?limit=${newLimit}`;
+        });
+    
+        var ctx = document.getElementById('typeChart').getContext('2d');
+        var typeChart = null;
+
+        const data = JSON.parse('{{ data | tojson }}');
+        const labels = data.map(item => item.type_name);
+        const counts = data.map(item => item.count);
+
+        typeChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Nombre de Pokémon par Type',
+                    data: counts,
+                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: getChartOptions()
+        });
+    
+        function getChartOptions() {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: "#F2F2F2" },
+                        grid: { color: "#354F66" }
+                    },
+                    x: {
+                        ticks: { color: "#F2F2F2" },
+                        grid: { color: "#354F66" }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: { color: "#F2F2F2", font: { size: 18 } }
+                    },
+                    tooltip: {
+                        backgroundColor: "#49668C",
+                        bodyColor: "#F2F2F2",
+                        titleColor: "#F2F2F2",
+                        bodyFont: { size: 14 },
+                        titleFont: { size: 16 }
+                    }
+                }
+            };
+        }
+    
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const limit = urlParams.get('limit') || 5;
+            document.getElementById('typeLimit').value = limit;
+            fetchAndRenderChart(limit);
+        });
+    </script>
+
+<footer>
+    <a href="/">Retour à l'accueil</a>
+</footer>
+</body>
+</html>
