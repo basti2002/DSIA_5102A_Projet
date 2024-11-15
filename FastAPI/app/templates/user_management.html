@@ -42,6 +42,15 @@
             color: #0D0D0D; 
             opacity: 0.5; 
         }
+        .error-message {
+            color: #D32F2F;
+            background-color: #FFCDD2;
+            border-left: 5px solid #D32F2F;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -50,6 +59,11 @@
     </header>
 
     <div class="container">
+        {% if error %}
+        <div class="error-message">
+            {{ error }}
+        </div>
+        {% endif %}
         <h2>Ajouter un Utilisateur</h2>
         <form action="/users/create" method="post">
             <input type="text" name="username" placeholder="Nom utilisateur" required>
@@ -64,8 +78,5 @@
             {% endfor %}
         </ul>
     </div>
-
-    <script>
-    </script>
 </body>
 </html>

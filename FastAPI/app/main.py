@@ -210,17 +210,25 @@ def manage_users(request: Request, db: Session = Depends(get_db)):
 
 @app.post("/users/create")
 async def create_user(request: Request, db: Session = Depends(get_db), username: str = Form(...), password: str = Form(...)):
+    # Vérifier si l'utilisateur existe déjà
+    existing_user = db.query(User).filter(User.username == username).first()
+    if existing_user:
+        users = db.query(User).all()  # Récupérer tous les utilisateurs pour les lister sur la page
+        return templates.TemplateResponse("user_management.html", {
+            "request": request,
+            "users": users,
+            "error": "Username already taken"
+        })
+
+    # Hasher le mot de passe
     hashed_password = pwd_context.hash(password)
     new_user = User(username=username, hashed_password=hashed_password)
     db.add(new_user)
     db.commit()
 
-    for slot in range(1, 7):  
-        empty_team_member = UserPokemonTeam(user_id=new_user.id, pokemon_id=None, slot=slot)
-        db.add(empty_team_member)
-    db.commit()
+    # Rediriger vers la gestion des utilisateurs après la création
+    return RedirectResponse(url=request.url_for("manage_users"), status_code=status.HTTP_302_FOUND)
 
-    return RedirectResponse(url="/users/manage", status_code=status.HTTP_302_FOUND)
 
 
 def authenticate_credentials(db: Session, username: str, password: str):
