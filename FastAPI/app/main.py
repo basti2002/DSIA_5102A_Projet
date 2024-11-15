@@ -154,22 +154,6 @@ def create_access_token(data: dict):
     logger.info(f"Generated token for {data['sub']} with expiry {expire}")
     return encoded_jwt
 
-
-@app.post("/token")
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(SessionLocal)):
-    user = authenticate_credentials(db, form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=401,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token = create_access_token(data={"sub": user.username})
-    response = RedirectResponse(url="/", status_code=302)
-    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=False, secure=False, max_age=3600)
-    return response
-
-
 from fastapi import FastAPI, Depends, Request, Response, status, Form
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -273,7 +257,10 @@ async def login(request: Request, db: Session = Depends(get_db), form_data: OAut
     user = authenticate_credentials(db, form_data.username, form_data.password)
     if not user:
         logger.warning(f"Login failed for username: {form_data.username}")
-        return JSONResponse(status_code=400, content={"message": "Incorrect username or password"})
+        return templates.TemplateResponse("home.html", {
+            "request": request,
+            "error": "Identifiant ou mot de passe incorrect"
+        })
     access_token = create_access_token(data={"sub": user.username})
     logger.info(f"Login successful for username: {form_data.username}")
     response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)

@@ -68,7 +68,7 @@
         <div id="userDetails" style="display: none;">
             <span id="welcomeMessage">Bienvenue, </span><span id="usernameDisplay"></span>
             <button onclick="logout()">Déconnexion</button>
-            <button class="btn-special" onclick="window.location.href='/equipe_pokemon'">Mon Équipe Pokémon</button> <!-- Nouveau bouton -->
+            <button class="btn-special" onclick="window.location.href='/equipe_pokemon'">Mon Équipe Pokémon</button> 
         </div>        
         <div id="cookieMessage" style="color: black; display: none;">
             <p>Ce site utilise des cookies pour améliorer votre expérience.</p>
@@ -76,6 +76,11 @@
         </div>
         <button id="userButton" class="btn btn-info" onclick="toggleLoginModal()">Utilisateur</button>
         <div id="loginModal">
+            {% if error %}
+            <div style="color: red; padding: 10px; border: 1px solid red; margin-bottom: 10px;">
+                {{ error }}
+            </div>
+            {% endif %}
             <form action="/login" method="post">
                 <input type="text" name="username" placeholder="Nom utilisateur" required>
                 <input type="password" name="password" placeholder="Mot de passe" required>
@@ -96,6 +101,7 @@
             <button class="btn btn-info" type="submit">Gérer les utilisateurs</button>
         </form>
     </div>
+    
     <div id="cookieStatus"></div>
     <script>
         function acceptCookies() {
