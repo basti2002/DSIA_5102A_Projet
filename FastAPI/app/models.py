@@ -1,7 +1,9 @@
-from sqlalchemy import Column, Integer,Float, String, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer,Float, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
+from sqlalchemy import CheckConstraint
 from database import Base
-from datetime import datetime, timezone, timedelta
+from datetime import datetime
+from pydantic import BaseModel
 
 class Pokemon(Base):
     __tablename__ = 'pokemon'
@@ -10,7 +12,6 @@ class Pokemon(Base):
     image_mini = Column(String)
     lien = Column(String)
     image = Column(String)
-    # Relations
     types = relationship("Type", secondary="pokemon_type", back_populates="pokemons")
     sensibilites = relationship("PokemonSensibilite", back_populates="pokemon")
 
@@ -39,12 +40,7 @@ class PokemonSensibilite(Base):
     pokemon = relationship("Pokemon", back_populates="sensibilites")
     type = relationship("Type")
     sensibilite = relationship("Sensibilite")
-    
-from sqlalchemy import Column, Integer, String, ForeignKey, Text, DateTime
-from sqlalchemy.orm import relationship
-from database import Base
-from pydantic import BaseModel
-from datetime import datetime
+
 
 class User(Base):
     __tablename__ = 'users'
@@ -57,9 +53,6 @@ class User(Base):
     def has_space_in_team(self):
         return len(self.pokemon_team) < 6
 
-
-from sqlalchemy import CheckConstraint
-
 class UserPokemonTeam(Base):
     __tablename__ = 'user_pokemon_team'
     user_id = Column(Integer, ForeignKey('users.id'), primary_key=True)
@@ -71,9 +64,6 @@ class UserPokemonTeam(Base):
     __table_args__ = (
         CheckConstraint('slot >= 0 AND slot <= 6', name='slot_range'),
     )
-
-
-
 
 class Post(Base):
     __tablename__ = 'posts'

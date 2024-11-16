@@ -1,36 +1,35 @@
-from fastapi import FastAPI, Depends, Request, Response, status, Form
+from fastapi import FastAPI, Depends, Request, Response, status, Form, HTTPException
+from fastapi.templating import Jinja2Templates
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import  RedirectResponse, HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from database import SessionLocal
-from models import Pokemon, PokemonType, Type, User, UserSchema, UserPokemonTeam, Sensibilite, PokemonSensibilite
-from fastapi.templating import Jinja2Templates
-import matplotlib.pyplot as plt
-from io import BytesIO
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, OAuth2PasswordRequestForm
-from fastapi.responses import RedirectResponse
+from sqlalchemy.exc import IntegrityError
 from jose import jwt, JWTError
-from datetime import datetime, timezone, timedelta
-from typing import List
 from passlib.context import CryptContext
-from fastapi import HTTPException
-from fastapi.staticfiles import StaticFiles
+from datetime import datetime, timedelta
+from typing import List, Optional
+import matplotlib.pyplot as plt
 import numpy as np
+import logging
 import base64
+from io import BytesIO
+from database import SessionLocal
+from models import Pokemon, PokemonType, Type, User, UserSchema, UserPokemonTeam
+
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 app = FastAPI()
 
-
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
 
-import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 
 def get_db():
     db = SessionLocal()
@@ -40,19 +39,22 @@ def get_db():
         db.close()
         
 # Configuration des paramètres JWT dans un lieu centralisé
-JWT_SECRET_KEY = "your_secret_key"  # Assurez-vous de garder cette clé sécurisée
+JWT_SECRET_KEY = "your_secret_key"
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_TIME_MINUTES = 60 * 24 * 7
 
-# Route principale pour gérer l'accueil et la vérification de l'utilisateur
-from fastapi import HTTPException, Depends, Request, Response
-from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
-from fastapi.responses import JSONResponse, RedirectResponse
-from typing import Optional
 
-# Définir le point de terminaison pour obtenir le token comme facultatif
+# Point de terminaison pour obtenir le token comme facultatif
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
+
+# Initilaise le HTTPBearer security
+security = HTTPBearer()
+
+COOKIE_POLICY = {
+    "httponly": False,
+    "secure": False,
+    "max_age": 3600,
+}
 
 
 # Vérification de l'existence de l'utilisateur
@@ -71,7 +73,6 @@ def check_user_logged_in(token: str):
         logger.error(f"Token validation error: {str(e)}")
         return False
 
-from fastapi.responses import HTMLResponse
 
 @app.get("/")
 async def home(request: Request, db: Session = Depends(get_db), token: Optional[str] = Depends(oauth2_scheme)):
@@ -154,14 +155,7 @@ def create_access_token(data: dict):
     logger.info(f"Generated token for {data['sub']} with expiry {expire}")
     return encoded_jwt
 
-from fastapi import FastAPI, Depends, Request, Response, status, Form
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.orm import Session
-from fastapi.exceptions import HTTPException
-from jose import jwt, JWTError
 
-# Initialize the HTTPBearer once and use it directly with Depends
-security = HTTPBearer()
 
 def get_current_user(db: Session = Depends(get_db), token: HTTPAuthorizationCredentials = Depends(security)):
     credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
@@ -244,13 +238,7 @@ async def authenticate_request(request: Request, call_next):
     return await call_next(request)
 
 
-from fastapi.responses import JSONResponse
 
-COOKIE_POLICY = {
-    "httponly": False,
-    "secure": False,
-    "max_age": 3600,
-}
 
 @app.post("/login")
 async def login(request: Request, db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
@@ -279,7 +267,6 @@ async def logout(request: Request):
 async def favicon():
     return Response(status_code=204)
 
-from fastapi import Form
 
 
 def base64_encode(value):
@@ -355,7 +342,6 @@ async def equipe_pokemon(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Utilisateur non authentifié")
 
 
-from sqlalchemy.exc import IntegrityError
 
 @app.post("/equipe_pokemon")
 async def update_team(
