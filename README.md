@@ -96,7 +96,7 @@ Pour vous connecter à un compte utilisateur vous devrez cliquer sur le bouton "
 Si vos identifiants sont correctes et les cookies accéptés, alors vous verrez un message de bienvenu une nouvelle option sur 
 la page d'acceuil permettant de voir "Mon équipe Pokémon". 
 
-### Accéder à votre équipe de pokémon et sa statistique de force et faiblesse
+### Accéder à votre équipe de pokémon et sa statistique de force et faiblesse face aux types existants
 
 Une fois connecté vous pourrez accéder à votre équipe pokémon depuis le bouton "Mon équipe Pokémon" de la page d'acceuil afin d'avoir accés à votre équipe pokémon. 
 Par défault votre équipe est vide et vous devrez rajouter manuellement les pokémon pour la constituer (avec un maximum de 6 pokémon).  
