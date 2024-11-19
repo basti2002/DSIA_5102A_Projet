@@ -109,6 +109,40 @@ vous serez forts et ceux pour lesquels vous aurez des faiblesses, lors d'un comb
 
 ## Difficultés rencontrés
 
+Au cours de ce projet nous avons pu faire face à de nombreux problèmes et avons du trouver les solutions adaptés à ces derniers dont en voici une liste non exaustive :
+
+
+
+1) Affichage de toutes les sensibilités :
+
+- Problème : Les sensibilités liées aux types n'étaient pas affichées correctement pour un pokemon 
+- Solution : Adaptation de la requête pour récupérer et adaptation du models.py pour établir des relations correctes entre les types du pokémon et ses sensibilités (lié aux types existant).
+
+2) Calcul dynamique des emplacements pour ma modulation de l'équipe pokémon de l'utilisateur :
+
+- Problème : Les emplacements des Pokémon dans l'équipe n'étaient pas recalculés dynamiquement lors de l'ajout ou de la suppression d'un Pokémon. 
+- Solution : Implémentation d'une renumérotation des emplacements à chaque modification de l'équipe pour maintenir l'ordre correct.
+
+
+3) Gestion des erreurs dans les requêtes de base de données :
+
+- Problème : Des erreurs survenaient lors de l'exécution de certaines requêtes, notamment dues à des références incorrectes ou à des objets non trouvés. 
+- Solution : Ajout de vérifications et de gestion des cas où les objets attendus ne sont pas trouvés (par exemple, vérification si un Pokémon existe avant de tenter de récupérer ses types et sensibilités).
+
+4) Correction des relations dans les modèles SQLAlchemy :
+
+- Problème : Des erreurs de jointures entre les tables dues à des attributs mal référencés. 
+- Solution : Correction des déclarations de clés étrangères et des relations dans les modèles SQLAlchemy pour assurer des jointures correctes et une intégrité référentielle.
+
+5) Intégration et tests des changements dans l'application web :
+
+- Problème : Assurer que les modifications du backend se reflètent correctement dans le frontend, notamment dans les formulaires et l'affichage des données. 
+- Solution : Révision du code HTML et des scripts JavaScript pour gérer correctement la nouvelle structure des données (types et sensibilités) et implémentation de tests pour vérifier la fonctionnalité après chaque changement.
+
+6) Gestion de la page de chargement :
+
+- Problème : Afficher une page de chargement pendant que les données sont en cours de récupération. 
+- Solution : Implémentation de la logique dans checkDatabase() pour afficher une page html servant d'écran de chargement si le nombre de Pokémon est inférieur à un certain seuil.
 
 ## Avertissement
 
