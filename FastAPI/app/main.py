@@ -18,43 +18,48 @@ from io import BytesIO
 from database import SessionLocal
 from models import Pokemon, PokemonType, Type, User, UserSchema, UserPokemonTeam
 
-
+# Configuration de la sécurité des mots de passe avec CryptContext
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# Initialisation de FastAPI
 app = FastAPI()
 
+# Configuration pour servir des fichiers statiques
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Configuration du système de templates Jinja2 pour la génération de réponses HTML
 templates = Jinja2Templates(directory="templates")
 
-
+# Configuration de base du système de logging pour le suivi des activités de l'application
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Générateur de session de base de données
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
-        
-# Configuration des paramètres JWT dans un lieu centralisé
-JWT_SECRET_KEY = "your_secret_key"
-JWT_ALGORITHM = "HS256"
+
+# Configuration des paramètres pour l'authentification par JWT
+JWT_SECRET_KEY = "your_secret_key"  
+JWT_ALGORITHM = "HS256"            
 JWT_EXPIRATION_TIME_MINUTES = 60 * 24 * 7
 
-
-# Point de terminaison pour obtenir le token comme facultatif
+# Configuration de l'authentification OAuth2 pour la récupération facultative des tokens
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 
-# Initilaise le HTTPBearer security
+# Configuration de l'authentification HTTP basée sur les cookies
 security = HTTPBearer()
 
+# Gestion des cookies utilisée lors de la gestion des sessions utilisateur
 COOKIE_POLICY = {
     "httponly": False,
-    "secure": False,
-    "max_age": 3600,
+    "secure": False,    
+    "max_age": 3600     
 }
+
 
 
 # Vérification de l'existence de l'utilisateur
@@ -73,37 +78,39 @@ def check_user_logged_in(token: str):
         logger.error(f"Token validation error: {str(e)}")
         return False
 
-
+# Gestion de la page d'accueil
 @app.get("/")
 async def home(request: Request, db: Session = Depends(get_db), token: Optional[str] = Depends(oauth2_scheme)):
-    pokemon_count = db.query(Pokemon).count()
-    if pokemon_count < 300:
+    pokemon_count = db.query(Pokemon).count() # Compter le nombre de Pokemons
+    if pokemon_count < 300: # Si moins de 300 Pokemons, afficher la page de chargement
         return templates.TemplateResponse("loading.html", {"request": request})
 
-    if token:
-        try:
+    if token: # Si un token est fourni, verifier si l'utilisateur est connecté
+        try: # Vérifier si le token est valide
             payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
             user = db.query(User).filter(User.username == payload.get("sub")).first()
-            if user:
+            if user: # Si l'utilisateur est trouvé, afficher la page d'accueil sur laquelle il est connecté
                 logger.info(f"Home page accessed by {user.username}")
                 return templates.TemplateResponse("home.html", {"request": request, "user": user.username})
-        except JWTError as e:
+        except JWTError as e: # Si le token n'est pas valide pas de connexion
             logger.error(f"Failed to decode JWT: {e}")
 
-    logger.info("Home page accessed anonymously")
+    logger.info("Home page accessed anonymously") # Si le token est invalide, afficher la page d'accueil anonyme
     return templates.TemplateResponse("home.html", {"request": request, "user": None})
 
+# Récupérer le nombre total de Pokemons, utilisé pour la page de chargement
 @app.get("/api/pokemon/count")
 async def get_pokemon_count(db: Session = Depends(get_db)):
     count = db.query(Pokemon).count()
     return {"count": count}
 
-
+# Récupérer la distribution des types de Pokemons
 @app.get("/pokemon/type_count", response_class=HTMLResponse)
 async def read_type_distribution(request: Request, limit: int = None, db: Session = Depends(get_db)):
-    if limit is None:
+    if limit is None: # Si aucun limit n'est fourni, utiliser 5 par défaut
         return RedirectResponse(url="/pokemon/type_count?limit=5", status_code=status.HTTP_303_SEE_OTHER)
 
+    # Récupérer la distribution des types de Pokemons par ordre décroissant (plus d'occurence en premier)
     type_distribution = (
         db.query(
             Type.type_nom,
@@ -115,10 +122,12 @@ async def read_type_distribution(request: Request, limit: int = None, db: Sessio
         .limit(limit)
         .all()
     )
+    # Créer une liste de dictionnaires pour l'affichage sur la page HTML avec le nom du type et le nombre de Pokémon 
     data = [{"type_name": name, "count": count} for name, count in type_distribution]
     return templates.TemplateResponse("type_count.html", {"request": request, "data": data, "limit": limit})
 
 
+# Récupérer la liste des Pokemons avec leurs types leur nom et leur image pour afficher tout les pokemons disponibles
 @app.get("/pokemon/view_db")
 def view_db(request: Request, db: Session = Depends(get_db)):
     # Création d'une requête pour récupérer les noms, images et types des Pokémon
@@ -128,7 +137,7 @@ def view_db(request: Request, db: Session = Depends(get_db)):
         Type.type_nom
     ).join(PokemonType, PokemonType.numero == Pokemon.numero)\
      .join(Type, PokemonType.type_id == Type.type_id)\
-     .order_by(Pokemon.nom).all()
+     .order_by(Pokemon.nom).all() # Trier les Pokémon par ordre alphabétique
 
     # Dictionnaire pour accumuler les données des Pokémon
     pokemon_data = {}
@@ -146,7 +155,7 @@ def view_db(request: Request, db: Session = Depends(get_db)):
         "pokemon_data": pokemon_list
     })
 
-
+# Créer un token JWT pour l'utilisateur connecté
 def create_access_token(data: dict):
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=JWT_EXPIRATION_TIME_MINUTES)
@@ -155,37 +164,35 @@ def create_access_token(data: dict):
     logger.info(f"Generated token for {data['sub']} with expiry {expire}")
     return encoded_jwt
 
-
-
+# Récupérer l'utilisateur actuellement connecté
 def get_current_user(db: Session = Depends(get_db), token: HTTPAuthorizationCredentials = Depends(security)):
-    credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
-    try:
+    credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials") # Si le token n'est pas valide, renvoyer une erreur
+    try: # Vérifier si le token est valide
+        # Décoder le JWT pour extraire l'ID utilisateur
         payload = jwt.decode(token.credentials, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
-        user_id: str = payload.get("user_id")
-        if user_id is None:
-            raise credentials_exception
-        user = db.query(User).filter(User.id == user_id).first()
-        if user is None:
+        user_id: str = payload.get("user_id") # Récupérer l'ID utilisateur
+        if user_id is None: # Si l'utilisateur n'est pas trouvé, renvoyer une erreur
+            raise credentials_exception 
+        user = db.query(User).filter(User.id == user_id).first() # Récuperer l'utilisateur correspondant à l'ID
+        if user is None: # Si cet user n'existe pas dans la base de données, renvoyer une erreur
             raise HTTPException(status_code=404, detail="User not found")
         return user
     except JWTError:
         raise credentials_exception
 
-
-
-
+# Récupérer tous les utilisateurs
 @app.get("/users", response_model=List[UserSchema])
 def read_users(db: Session = Depends(get_db)):
     users = db.query(User).all()
     return users
 
-
+# Gestion des utilisateurs
 @app.get("/users/manage")
 def manage_users(request: Request, db: Session = Depends(get_db)):
     users = db.query(User).all()
-    return templates.TemplateResponse("user_management.html", {"request": request, "users": users})
+    return templates.TemplateResponse("user_management.html", {"request": request, "users": users}) # Afficher la page de gestion des utilisateurs avec la liste des utilisateurs
 
-
+# Créer un nouvel utilisateur
 @app.post("/users/create")
 async def create_user(request: Request, db: Session = Depends(get_db), username: str = Form(...), password: str = Form(...)):
     # Vérifier si l'utilisateur existe déjà
@@ -208,74 +215,74 @@ async def create_user(request: Request, db: Session = Depends(get_db), username:
     return RedirectResponse(url=request.url_for("manage_users"), status_code=status.HTTP_302_FOUND)
 
 
-
+# Authentifier l'utilisateur et créer un token JWT
 def authenticate_credentials(db: Session, username: str, password: str):
     user = db.query(User).filter(User.username == username).first()
     if user and pwd_context.verify(password, user.hashed_password):
         return user
     return None
 
+# Middleware pour authentifier l'utilisateur
 @app.middleware("http")
 async def authenticate_request(request: Request, call_next):
-    token = request.cookies.get('access_token')
-    if token:
-        db = next(get_db())
-        try:
-            payload = jwt.decode(token.split("Bearer ")[1], JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+    token = request.cookies.get('access_token') # Récupérer le token depuis les cookies
+    if token: # Si un token est fourni
+        db = next(get_db()) # Récupérer la session de base de données
+        try: # Vérifier si le token est valide et si l'utilisateur existe
+            payload = jwt.decode(token.split("Bearer ")[1], JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM]) # Décoder le JWT pour extraire l'ID utilisateur
             username = payload.get("sub")
             user = db.query(User).filter(User.username == username).first()
-            if not user:
+            if not user: # Si l'utilisateur n'existe pas, renvoyer une erreur
                 response = RedirectResponse(url="/")
                 response.delete_cookie("access_token")
                 return response
             request.state.user = user
-        except (JWTError, IndexError):
+        except (JWTError, IndexError): # Si le token est invalide, renvoyer une erreur
             response = RedirectResponse(url="/")
             response.delete_cookie("access_token")
             return response
-        finally:
+        finally: # Fermer la session de base de données
             db.close()
-    return await call_next(request)
+    return await call_next(request) 
 
 
-
-
+# Authentication de l'utilisateur
 @app.post("/login")
 async def login(request: Request, db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
-    user = authenticate_credentials(db, form_data.username, form_data.password)
-    if not user:
-        logger.warning(f"Login failed for username: {form_data.username}")
-        return templates.TemplateResponse("home.html", {
+    user = authenticate_credentials(db, form_data.username, form_data.password) # Authentifier l'utilisateur
+    if not user: # Si l'utilisateur n'existe pas
+        logger.warning(f"Login failed for username: {form_data.username}") # Enregistrer l'erreur
+        return templates.TemplateResponse("home.html", { # Afficher la page d'accueil avec un message d'erreur
             "request": request,
             "error": "Identifiant ou mot de passe incorrect"
         })
-    access_token = create_access_token(data={"sub": user.username})
+    access_token = create_access_token(data={"sub": user.username}) # Créer un token JWT
     logger.info(f"Login successful for username: {form_data.username}")
     response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
-    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=False, secure=False, max_age=3600)
+    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=False, secure=False, max_age=3600) # Enregistrer le token JWT dans un cookie
     return response
 
 
+# Deconnexion de l'utilisateur
 @app.post("/logout")
 async def logout(request: Request):
     response = RedirectResponse(url="/")
-    response.delete_cookie("access_token")
+    response.delete_cookie("access_token") # Effacer le token JWT issu du cookie du navigateur
     return response
 
-
+# Gestion du favicon
 @app.get("/favicon.ico")
 async def favicon():
     return Response(status_code=204)
 
-
-
+# Filtre pour encoder une valeur en base64
 def base64_encode(value):
     return base64.b64encode(value).decode("utf-8")
 
 # Ajouter le filtre à l'environnement Jinja2
 templates.env.filters['b64encode'] = base64_encode
 
-
+# Afficher l'équipe de Pokémon
 @app.get("/equipe_pokemon", response_class=HTMLResponse)
 async def equipe_pokemon(request: Request, db: Session = Depends(get_db)):
     user = request.state.user
