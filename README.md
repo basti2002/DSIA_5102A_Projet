@@ -90,7 +90,7 @@ par ordre décroissant (pour montrer les types les plus courant en priorité).
 
 ### Connexion à un compte utilisateur
 
-Pour vous connecter à un compte utilisateur vous devrez cliquer sur le bouton "Utilisateur" de la page d'acceuil afi q'une fenêtre pop up apparaisse en haut
+Pour vous connecter à un compte utilisateur vous devrez cliquer sur le bouton "Utilisateur" de la page d'acceuil afin qu'une fenêtre pop up apparaisse en haut
 à droite de votre écran. Ainsi vous pourrez renseigner le nom d'utilisateur et le mot de passe associé pour vous connecter.
 
 Si vos identifiants sont correctes et les cookies accéptés, alors vous verrez un message de bienvenu une nouvelle option sur 
