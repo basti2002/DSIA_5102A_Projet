@@ -112,8 +112,8 @@ Par défaut, votre équipe est vide et vous devrez rajouter manuellement les Pok
 Une fois votre équipe de Pokémon constituée, vous pourrez voir un diagramme en étoile indiquant les forces (en vert) et les faiblesses (en rouge) 
 de votre équipe Pokémon,
 ces statistiques sont basées sur la somme par types des valeurs des sensibilités de chacun des types de vos Pokémon (exemple : la somme des valeurs de sensibilités )
-Pour le type plante de tous les Pokémon de votre équipe). Ainsi, vous obtiendrez une vue d'ensemble sur les types pour lesquels
-Vous serez forts et ceux pour lesquels vous aurez des faiblesses, lors d'un combat Pokémon.
+pour le type plante de tous les Pokémon de votre équipe). Ainsi, vous obtiendrez une vue d'ensemble sur les types pour lesquels
+vous serez forts et ceux pour lesquels vous aurez des faiblesses, lors d'un combat Pokémon.
 
 
 ## Difficultés rencontrées
@@ -128,21 +128,21 @@ Au cours de ce projet, nous avons pu faire face à de nombreux problèmes et avo
 - Solution : Adaptation du models.py pour les relations entre les types du pokémon et ses sensibilités (lié aux types existant) puis de la requête de FastAPI pour 
 récupérer correctement ces données.
 
-2) Calcul dynamique des emplacements pour ma modulation de l'équipe pokémon de l'utilisateur :
+2) Calcul dynamique des emplacements de l'équipe pokémon de l'utilisateur :
 
-- Problème : Les emplacements des Pokémon dans l'équipe n'étaient pas recalculés dynamiquement lors de l'ajout ou de la suppression d'un Pokémon. 
-- Solution : Implémentation d'une renumérotation des emplacements à chaque modification de l'équipe pour maintenir l'ordre correct.
+- Problème : Les emplacements des Pokémon dans l'équipe n'étaient pas recalculés correctement et dynamiquement lors de l'ajout ou de la suppression d'un Pokémon. 
+- Solution : Implémentation d'une renumérotation des emplacements à chaque modification de l'équipe pour maintenir l'ordre correct, meilleure gestion des donénes entre le back et le front end.
 
 
 3) Gestion des erreurs dans les requêtes de base de données :
 
-- Problème : Des erreurs survenaient lors de l'exécution de certaines requêtes, notamment dues à des références incorrectes ou à des objets non trouvés. 
-- Solution : Ajout de vérifications et de gestion des cas où les objets attendus ne sont pas trouvés (par exemple, vérification si un Pokémon existe avant de tenter de récupérer ses types et sensibilités).
+- Problème : Des erreurs survenaient lors de l'exécution de certaines requêtes, dues à des références incorrectes ou à des objets non trouvés. 
+- Solution : Ajout de vérifications et de gestion des cas où les objets attendus ne sont pas trouvés.
 
 4) Correction des relations dans les modèles SQLAlchemy :
 
 - Problème : Des erreurs de jointures entre les tables dues à des attributs mal référencés. 
-- Solution : Correction des déclarations de clés étrangères et des relations dans les modèles SQLAlchemy pour assurer des jointures correctes et une intégrité référentielle.
+- Solution : Correction des déclarations de clés étrangères et des relations dans les modèles SQLAlchemy pour assurer des jointures correctes.
 
 5) Intégration et tests des changements dans l'application web :
 
@@ -157,17 +157,22 @@ récupérer correctement ces données.
 7) Affichage conditionnel de la page :
 
 - Problème : Il fallait s'assurer que la page s'affiche de manière anonyme si aucun utilisateur n'était connecté, tout en permettant une expérience personnalisée pour les utilisateurs authentifiés. 
-- Solution : Utilisation de Jinja2 dans home.html pour conditionner l'affichage des éléments de l'interface utilisateur en fonction de l'état de connexion de l'utilisateur. Si le token JWT est valide et correspond à un utilisateur, les détails de l'utilisateur sont affichés ; sinon, l'interface reste en mode non connecté.
+- Solution : Utilisation de Jinja2 dans home.html pour conditionner l'affichage des éléments de l'interface utilisateur en fonction de l'état de connexion de 
+l'utilisateur. Si le token JWT est valide et correspond à un utilisateur, les détails de l'utilisateur sont affichés ; sinon, l'interface reste en mode non connecté.
 
 8) Suppression des cookies à chaque démarrage de l'application :
 
-- Problème : Nécessité d'éviter une connexion automatique avec des cookies obsolètes qui pourraient référencer un compte supprimé ou invalide.
+- Problème : Nécessité d'éviter une connexion automatique avec des cookies obsolètes (issu de précédente connexion mais toujours enregistré par le navigateur)
+qui pourraient référencer un compte supprimé ou invalide.
 - Solution : Implémentation d'un middleware dans main.py qui vérifie à chaque requête l'existence et la validité du token stocké dans les cookies. Si le token est invalide ou si l'utilisateur ne correspond pas, le cookie est supprimé pour forcer une nouvelle authentification.
 
 9) Gestion complexe des cookies :
 
 - Problème : Les cookies doivent être gérés de manière sécurisée pour éviter les accès non autorisés, tout en étant accessible côté client pour les opérations nécessaires comme la déconnexion. 
-- Solution : Utilisation de l'attribut HttpOnly réglé sur False pour permettre au script côté client de lire le cookie et de gérer la déconnexion. Le cookie secure est réglé sur False pour permettre les tests en développement sans HTTPS, mais cela devrait être sur True pour renforcer la sécurité.
+- Solution : Régler l'attribut HttpOnly sur False pour permettre au script côté client (front end) de lire le cookie et de gérer la déconnexion. 
+De plus le paramètre cookie secure est réglé sur False pour permettre des tests en développement sans HTTPS, même si celui ci devrait normalement être réglé sur True pour renforcer la sécurité.
+Cependant pour les attendus ce de projet un niveau de sécurité élevé n'était pas requis, nous avons fait un compromis entre efficacité des fonctionnalités
+de l'application et la sécurité globale (si l'application était déployé à plus grande échelle).
 
 ## Avertissement réutilisation de partie de projet
 
