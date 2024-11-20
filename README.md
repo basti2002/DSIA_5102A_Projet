@@ -118,7 +118,8 @@ vous serez forts et ceux pour lesquels vous aurez des faiblesses, lors d'un comb
 
 ## Difficultés rencontrées
 
-Au cours de ce projet, nous avons pu faire face à de nombreux problèmes et avons dû trouver les solutions adaptées à ces derniers, dont en voici une liste de diverses problèmes rencontrés lors de ce projet :
+Au cours de ce projet, nous avons pu faire face à de nombreux problèmes et avons dû trouver les solutions adaptées à ces derniers, dont en voici une liste de 
+diverses problèmes rencontrés pendant son développement :
 
 
 
