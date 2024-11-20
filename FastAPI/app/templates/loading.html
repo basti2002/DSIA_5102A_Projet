@@ -31,6 +31,7 @@
     <p>Veuillez patienter, le site Pokepedia est en cours d'extraction pour former la base de données.</p>
 
     <script>
+        // Permet de rafraîchir la page toutes les 5 secondes tant que le nombre de Pokémon est inférieur à 300
         function reloadPage() {
             fetch('/api/pokemon/count')
                 .then(response => response.json())

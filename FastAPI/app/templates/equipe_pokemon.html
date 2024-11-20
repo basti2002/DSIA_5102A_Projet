@@ -92,14 +92,30 @@
             background-color: #49668C;
             color: white;
         }
+        .back-button {
+            background-color: #D99962;
+            color: #FFFFFF;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .back-button:hover {
+            background-color: #bf8852;
+            text-decoration: none;
+        }
     </style>
   <script>
+    // Permet de mettre en place un système de menu déroulant avec une barre de recherche, facilitant la navigation
     $(document).ready(function() {
       $('#pokemon').select2({
         placeholder: "Sélectionnez un Pokémon",
         allowClear: true
       });
 
+      // Gestionnaire d'événement pour le bouton de soumission
       $('input[type="submit"]').click(function() {
         console.log('Bouton de soumission cliqué');
         var action = $(this).val();
@@ -112,6 +128,7 @@
         console.log('Slot Number : ' + slot_number);
         });
 
+        // Gestionnaire d'événement pour le formulaire
         $('form').submit(function(event) {
         console.log('Formulaire soumis');
         var formData = $(this).serialize();
@@ -183,14 +200,16 @@
     </div>
     
     {% if radar_chart %}
-        <h2>Statistiques de l'Équipe</h2>
+        <h2>Statistique de l'Équipe</h2>
+        <p>Vous pouvez observer ci-dessous le diagramme en étoile des sensibilités de votre équipe Pokémon afin d'avoir une vue d'ensemble sur les forces (signalées d'un trait vert) et les faiblesses (signalées d'un trait rouge) des types existants.</p>
+        <p>Plus une valeur est haute, plus la sensibilité au type associé est forte. Par relation inverse, plus la valeur est basse, plus la sensibilité au type associé est faible.</p>
         <div style="text-align: center; margin-top: 20px;">
             <img src="data:image/png;base64,{{ radar_chart | b64encode }}" alt="Diagramme en étoile des sensibilités" />
         </div>
     {% endif %}
   
     <footer>
-        <a href="/">Retour à l'accueil</a>
+        <a href="/" class="back-button">Retour à l'accueil</a>
     </footer>
   </body>
   </html>

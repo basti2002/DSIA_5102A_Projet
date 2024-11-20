@@ -104,17 +104,20 @@
     
     <div id="cookieStatus"></div>
     <script>
+        // Permet d'accepter les cookies
         function acceptCookies() {
             document.cookie = "cookies_accepted=true; path=/; max-age=" + (60 * 60 * 24 * 30);
             document.getElementById('cookieMessage').style.display = 'none'; 
             checkSession(); 
         }
 
+        // Permet l'affichage des champs de connexion de l'utilisateur avec la fenêtre pop up
         function toggleLoginModal() {
             var modal = document.getElementById('loginModal');
             modal.style.display = modal.style.display === 'none' ? 'block' : 'none';
         }
 
+        // Permet de verifier si les cookies via le navigateur sont acceptés
         function checkCookiesAccepted() {
             const cookieValue = getCookie('cookies_accepted');
             const cookieStatus = document.getElementById('cookieStatus');
@@ -127,6 +130,7 @@
             }
         }
 
+        // Permet de verifier si un utilisateur est connecté via un token valide sinon afficher la page d'accueil anonyme
         function checkSession() {
             const token = getCookie('access_token');
             const userDetails = document.getElementById('userDetails');
@@ -149,6 +153,7 @@
             }
         }
 
+        // Permet de se déconnecter en utilisant le bouton de déconnexion
         function logout() {
             fetch('/logout', { method: 'POST' })
                 .then(() => {
@@ -157,12 +162,14 @@
                 .catch(error => console.error('Error:', error));
         }
 
+        // Fonction pour décoder un token JWT pour authentifier les utilisateurs
         function decodeJWT(token) {
             const base64Url = token.split('.')[1];
             const base64 = base64Url.replace('-', '+').replace('_', '/');
             return JSON.parse(window.atob(base64));
         }
 
+        // Fonction pour obtenir une valeur de cookie 
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
@@ -178,6 +185,7 @@
             return cookieValue;
         }
 
+        // Regarde automatiquement si les cookies sont acceptés et si le token d'authentification est valide
         document.addEventListener('DOMContentLoaded', function() {
             checkCookiesAccepted();
             checkSession();

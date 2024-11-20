@@ -11,7 +11,7 @@
             margin: 0;
             padding: 20px;
         }
-        header, footer {
+        header, footer{
             background-color: #182940;
             color: #F2F2F2;
             padding: 10px 0;
@@ -65,12 +65,30 @@
         a:hover {
             text-decoration: underline;
         }
+        .back-button {
+            background-color: #D99962;
+            color: #FFFFFF;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .back-button:hover {
+            background-color: #bf8852;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
     <header>
         <h1>Liste des Pokémon</h1>
     </header>
+
+    <footer>
+        <a href="/" class="back-button">Retour à l'accueil</a>
+    </footer>
 
     <div>
         {% for pokemon in pokemon_data %}
@@ -85,9 +103,6 @@
             </div>
         {% endfor %}
     </div>
-    
-    <footer>
-        <a href="/">Retour à l'accueil</a>
-    </footer>
+
 </body>
 </html>

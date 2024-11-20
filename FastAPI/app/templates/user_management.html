@@ -16,6 +16,12 @@
             text-align: center;
             padding: 1rem;
         }
+        footer{
+            background-color: #F2F2F2;
+            color: #F2F2F2;
+            padding: 10px 0;
+            text-align: center;
+        }
         .container {
             padding: 20px;
         }
@@ -51,6 +57,20 @@
             border-radius: 5px;
             font-weight: bold;
         }
+        .back-button {
+            background-color: #D99962;
+            color: #FFFFFF;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .back-button:hover {
+            background-color: #bf8852;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
@@ -77,6 +97,10 @@
                 <li>{{ user.username }}</li>
             {% endfor %}
         </ul>
+    
     </div>
+    <footer>
+        <a href="/" class="back-button">Retour à l'accueil</a>
+    </footer>
 </body>
 </html>
